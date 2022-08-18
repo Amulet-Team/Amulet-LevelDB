@@ -499,8 +499,10 @@ cdef class LevelDB:
             leveldb_iter_next(it.it)
 
     def __contains__(self, bytes key):
-        keys = list(self.iterate(key, key + b"\x00"))
-        return bool(keys) and keys[0][0] == key
+        try:
+            return key == next(self.iterate(key, key + b"\x00"))[0]
+        except StopIteration:
+            return False
 
     def __getitem__(self, bytes key):
         return self.get(key)

@@ -3,8 +3,9 @@
 import os
 import sys
 from cpython.bytes cimport PyBytes_FromStringAndSize
-from typing import Dict, Iterator, Tuple
+from typing import Dict, Iterator as TypingIterator, Tuple
 cimport cython
+from weakref import WeakSet
 
 if sys.platform == "win32":
     if sys.maxsize > 2 ** 32:  # 64 bit python
@@ -263,11 +264,36 @@ cdef inline void _check_db(void *db) except *:
     if db is NULL:
         raise LevelDBException("The database has been closed.")
 
+
+@cython.final
+cdef class Iterator:
+    cdef leveldb_iterator_t *it
+    cdef object __weakref__
+
+    def __cinit__(self):
+        self.it = NULL
+
+    @staticmethod
+    cdef Iterator(leveldb_t *db, leveldb_readoptions_t *read_options):
+        cdef Iterator self = Iterator()
+        self.it = leveldb_create_iterator(db, read_options)
+        return self
+
+    cdef destroy(self):
+        if self.it is not NULL:
+            leveldb_iter_destroy(self.it)
+            self.it = NULL
+
+    def __del__(self):
+        self.destroy()
+
+
 @cython.final
 cdef class LevelDB:
     cdef leveldb_t * db
     cdef leveldb_readoptions_t * read_options
     cdef leveldb_writeoptions_t * write_options
+    cdef object iterators
 
     def __init__(self, str path, unsigned char create_if_missing = False):
         """
@@ -285,6 +311,7 @@ cdef class LevelDB:
         self.db = NULL
         self.read_options = NULL
         self.write_options = NULL
+        self.iterators = WeakSet()
 
     cdef void _open(self, str path, unsigned char create_if_missing = False) except *:
         if not os.path.isdir(path):
@@ -316,7 +343,10 @@ cdef class LevelDB:
         self.read_options = leveldb_readoptions_create()
         self.write_options = leveldb_writeoptions_create()
 
-    cpdef void close(self, unsigned char compact=True) except *:
+    def __del__(self):
+        self.close()
+
+    cpdef void close(self, unsigned char compact=False) except *:
         """
         Close the leveldb database.
 
@@ -325,6 +355,9 @@ cdef class LevelDB:
         _check_db(self.db)
         if compact:
             leveldb_compact_range(self.db, NULL, 0, NULL, 0)
+        cdef Iterator it
+        for it in self.iterators:
+            it.destroy()
         leveldb_close(self.db)
         self.db = NULL
         leveldb_readoptions_destroy(self.read_options)
@@ -407,6 +440,11 @@ cdef class LevelDB:
         leveldb_delete(self.db, self.write_options, key, keylen, &error)
         _checkError(error)
 
+    cdef Iterator new_iterator(self):
+        cdef Iterator it = Iterator.Iterator(self.db, self.read_options)
+        self.iterators.add(it)
+        return it
+
     def iterate(
             self, start: bytes = None, end: bytes = None
     ):  # -> Iterator[Tuple[bytes, bytes]]:
@@ -421,53 +459,44 @@ cdef class LevelDB:
         cdef char *key
         cdef char *val
         cdef size_t keylen, vallen
-        it = leveldb_create_iterator(self.db, self.read_options)
+        cdef Iterator it = self.new_iterator()
         if start is None:
-            leveldb_iter_seek_to_first(it)
+            leveldb_iter_seek_to_first(it.it)
         else:
-            leveldb_iter_seek(it, start, len(start))
-        try:
-            while leveldb_iter_valid(it):
-                key = leveldb_iter_key(it, &keylen)
-                key_bytes = PyBytes_FromStringAndSize(key, keylen)
-                if end is not None and key_bytes >= end:
-                    break
-                val = leveldb_iter_value(it, &vallen)
-                yield key_bytes, PyBytes_FromStringAndSize(val, vallen)
-                leveldb_iter_next(it)
-        finally:
-            leveldb_iter_destroy(it)
+            leveldb_iter_seek(it.it, start, len(start))
+        while leveldb_iter_valid(it.it):
+            key = leveldb_iter_key(it.it, &keylen)
+            key_bytes = PyBytes_FromStringAndSize(key, keylen)
+            if end is not None and key_bytes >= end:
+                break
+            val = leveldb_iter_value(it.it, &vallen)
+            yield key_bytes, PyBytes_FromStringAndSize(val, vallen)
+            leveldb_iter_next(it.it)
 
     def keys(self):  # -> Iterator[bytes]:
         """An iterable of all the keys in the database."""
         _check_db(self.db)
         cdef char *key
         cdef size_t keylen
-        it = leveldb_create_iterator(self.db, self.read_options)
-        leveldb_iter_seek_to_first(it)
-        try:
-            while leveldb_iter_valid(it):
-                key = leveldb_iter_key(it, &keylen)
-                yield PyBytes_FromStringAndSize(key, keylen)
-                leveldb_iter_next(it)
-        finally:
-            leveldb_iter_destroy(it)
+        cdef Iterator it = self.new_iterator()
+        leveldb_iter_seek_to_first(it.it)
+        while leveldb_iter_valid(it.it):
+            key = leveldb_iter_key(it.it, &keylen)
+            yield PyBytes_FromStringAndSize(key, keylen)
+            leveldb_iter_next(it.it)
 
     def items(self):  # -> Iterator[Tuple[bytes, bytes]]:
         _check_db(self.db)
         cdef char *key
         cdef char *val
         cdef size_t keylen, vallen
-        it = leveldb_create_iterator(self.db, self.read_options)
-        leveldb_iter_seek_to_first(it)
-        try:
-            while leveldb_iter_valid(it):
-                key = leveldb_iter_key(it, &keylen)
-                val = leveldb_iter_value(it, &vallen)
-                yield PyBytes_FromStringAndSize(key, keylen), PyBytes_FromStringAndSize(val, vallen)
-                leveldb_iter_next(it)
-        finally:
-            leveldb_iter_destroy(it)
+        cdef Iterator it = self.new_iterator()
+        leveldb_iter_seek_to_first(it.it)
+        while leveldb_iter_valid(it.it):
+            key = leveldb_iter_key(it.it, &keylen)
+            val = leveldb_iter_value(it.it, &vallen)
+            yield PyBytes_FromStringAndSize(key, keylen), PyBytes_FromStringAndSize(val, vallen)
+            leveldb_iter_next(it.it)
 
     def __contains__(self, bytes key):
         keys = list(self.iterate(key, key + b"\x00"))
@@ -482,5 +511,5 @@ cdef class LevelDB:
     def __delitem__(self, bytes key):
         self.delete(key)
 
-    def __iter__(self) -> Iterator[bytes]:
+    def __iter__(self) -> TypingIterator[bytes]:
         return self.keys()

@@ -143,15 +143,24 @@ class LevelDBTestCase(unittest.TestCase):
             })
 
             it1 = db.iterate()
+            print("get first iterator")
             self.assertEqual((b"a", b"1"), next(it1))
+            print("get from first iterator")
             self.assertEqual((b"b", b"2"), next(it1))
+            print("get from first iterator")
             self.assertEqual((b"c", b"3"), next(it1))
+            print("get from first iterator")
             it2 = db.iterate()
+            print("get second iterator")
             self.assertEqual((b"a", b"1"), next(it2))
+            print("get from second iterator")
             self.assertEqual((b"d", b"4"), next(it1))
+            print("get from first iterator")
             self.assertEqual((b"b", b"2"), next(it2))
+            print("get from second iterator")
 
             db.close()
+            print("close")
 
     def test_keys_twice(self):
         with TemporaryDirectory() as path:

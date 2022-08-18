@@ -2,6 +2,7 @@ import unittest
 from leveldb import LevelDB, LevelDBException
 import struct
 from tempfile import TemporaryDirectory
+import logging
 
 num_keys = [struct.pack("<Q", i) for i in range(10_000)]
 num_db = dict(zip(num_keys, num_keys))
@@ -143,24 +144,24 @@ class LevelDBTestCase(unittest.TestCase):
             })
 
             it1 = db.iterate()
-            print("get first iterator")
+            logging.warning("get first iterator")
             self.assertEqual((b"a", b"1"), next(it1))
-            print("get from first iterator")
+            logging.warning("get from first iterator")
             self.assertEqual((b"b", b"2"), next(it1))
-            print("get from first iterator")
+            logging.warning("get from first iterator")
             self.assertEqual((b"c", b"3"), next(it1))
-            print("get from first iterator")
+            logging.warning("get from first iterator")
             it2 = db.iterate()
-            print("get second iterator")
+            logging.warning("get second iterator")
             self.assertEqual((b"a", b"1"), next(it2))
-            print("get from second iterator")
+            logging.warning("get from second iterator")
             self.assertEqual((b"d", b"4"), next(it1))
-            print("get from first iterator")
+            logging.warning("get from first iterator")
             self.assertEqual((b"b", b"2"), next(it2))
-            print("get from second iterator")
+            logging.warning("get from second iterator")
 
             db.close()
-            print("close")
+            logging.warning("close")
 
     def test_keys_twice(self):
         with TemporaryDirectory() as path:

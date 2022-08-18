@@ -18,59 +18,8 @@ else:  # linux, compile your own .so if this errors!
 
 cdef bytes lib_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), lib_name).encode()
 
-cdef extern from *:
-    """
-    #if defined(_WIN32) || defined(MS_WINDOWS) || defined(_MSC_VER)
-        #include <windows.h>
-        #include <libloaderapi.h>
-        #include <stdlib.h>
-        #include <stdio.h>
-        void *getFunction(const char *libPath, const char *functionName) {
-            HINSTANCE module = LoadLibraryA(libPath);
-            if (module == NULL) {
-                printf("Could not find shared library %s.\\n", libPath);
-                exit(1);
-                return NULL;
-            }
-            void *func = GetProcAddress(module, functionName);
-            if (func == NULL) {
-                printf("Could not find function %s in %s.\\n", functionName, libPath);
-                exit(1);
-                return NULL;
-            }
-            return func;
-        }
-    #elif defined(unix) || defined(__unix__) || defined(__unix)
-        #include "dlfcn.h"
-        #include <stdlib.h>
-        #include <stdio.h>
-        void *getFunction(const char *libPath, const char *functionName) {
-            void *module = dlopen(libPath, RTLD_LAZY);
-            if (module == NULL) {
-                printf("Could not find shared library %s.\\n", libPath);
-                exit(1);
-                return NULL;
-            }
-            void *func = dlsym(module, functionName);
-            if (func == NULL) {
-                printf("Could not find function %s in %s.\\n", functionName, libPath);
-                exit(1);
-                return NULL;
-            }
-            return func;
-        }
-    #else
-        #include <stdlib.h>
-        #include <stdio.h>
-        void *getFunction(const char *libPath, const char *functionName) {
-            printf("The leveldb wrapper does not support your platform.\\n");
-            exit(1);
-            return NULL;
-        }
-    #endif
-    """
-    # using "myapp_" prefix in the C code to prevent C naming conflicts
-    void *get_function "getFunction"(const char *libPath, const char *functionName) nogil
+cdef extern from "dynamic.h":
+    void *get_function(const char *libPath, const char *functionName) nogil
 
 cdef extern from "leveldb.h":
     struct leveldb_t:

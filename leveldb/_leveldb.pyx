@@ -524,5 +524,14 @@ cdef class LevelDB:
         keys = list(self.iterate(key, key + b"\x00"))
         return bool(keys) and keys[0][0] == key
 
+    def __getitem__(self, bytes key):
+        return self.get(key)
+
+    def __setitem__(self, bytes key, bytes value):
+        self.put(key, value)
+
+    def __delitem__(self, bytes key):
+        self.delete(key)
+
     def __iter__(self) -> Iterator[bytes]:
         return self.keys()

@@ -1,1 +1,1 @@
-from ._leveldb import LevelDB, LevelDBException
+from ._leveldb import LevelDB, LevelDBException, LevelDBIteratorException, Iterator

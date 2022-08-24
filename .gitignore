@@ -1,3 +1,8 @@
+# ignore all files without an extension
+*
+!*/
+!*.*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -147,4 +152,7 @@ cython_debug/
 *.c
 *.cpp
 zlib
-leveldb_mcpe
+
+# exclude all files in leveldb_mcpe that are not header files
+/leveldb_mcpe/**/*.*
+!/leveldb_mcpe/**/*.h

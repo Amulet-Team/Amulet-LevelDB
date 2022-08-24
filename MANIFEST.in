@@ -1,1 +1,2 @@
-recursive-include leveldb *.py *.pyi *.pyx *.pxd *.so *.dylib *.dll *.h
+recursive-include leveldb *.py *.pyi *.pyx *.pxd *.lib *.dll *.exp *.a *.so *.dylib *.dll *.h
+recursive-include build_tools *.py

@@ -145,5 +145,6 @@ cython_debug/
 .idea/
 
 *.c
+*.cpp
 zlib
 leveldb_mcpe

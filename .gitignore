@@ -144,5 +144,4 @@ cython_debug/
 # PyCharm
 .idea/
 
-*.c
-worlds_temp
+/src/leveldb/*.cpp

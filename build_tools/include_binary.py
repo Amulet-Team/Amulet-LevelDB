@@ -52,3 +52,4 @@ class IncludeBinary(Command):
             os.path.join(self.build_lib, "bin", get_bin_dir(), get_bin_name()),
             os.path.join(self.build_lib, "leveldb", get_bin_name())
         )
+        shutil.rmtree(os.path.join(self.build_lib, "bin"))

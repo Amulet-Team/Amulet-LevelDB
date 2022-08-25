@@ -1,2 +1,6 @@
-recursive-include leveldb *.py *.pyi *.pyx *.pxd *.lib *.dll *.exp *.a *.so *.dylib *.dll *.h
+recursive-include src/leveldb *.py *.pyi *.pyx *.pxd
+recursive-include src/bin *.lib *.dll *.exp *.a *.so *.dylib *.dll
 recursive-include build_tools *.py
+recursive-include leveldb_mcpe *.h
+include leveldb_mcpe.pxd
+include versioneer.py

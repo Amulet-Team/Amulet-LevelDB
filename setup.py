@@ -3,10 +3,10 @@ import os
 
 from setuptools import setup, Extension
 from Cython.Build import cythonize
+sys.path.append(os.path.dirname(__file__))
 import versioneer
-
+sys.path.remove(os.path.dirname(__file__))
 sys.path.append(os.path.join(os.path.dirname(__file__), "build_tools"))
-
 import include_binary
 
 cmdclass = versioneer.get_cmdclass()
@@ -33,7 +33,7 @@ elif sys.platform == "darwin":
 else:
     raise Exception("Unsupported platform")
 
-library_dirs = [os.path.join("bin", include_binary.get_bin_dir())]
+library_dirs = [os.path.join("src/bin", include_binary.get_bin_dir())]
 
 
 setup(
@@ -42,7 +42,7 @@ setup(
     ext_modules=cythonize(
         Extension(
             name="leveldb._leveldb",
-            sources=["./leveldb/_leveldb.pyx"],
+            sources=["./src/leveldb/_leveldb.pyx"],
             include_dirs=[
                 "leveldb_mcpe",
                 "leveldb_mcpe/include",
@@ -53,11 +53,5 @@ setup(
             define_macros=define_macros,
         ),
         language_level=3,
-    ),
-    package_data={
-        "leveldb": [
-            "*.pyi",
-            "py.typed",
-        ]
-    }
+    )
 )

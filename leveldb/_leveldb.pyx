@@ -265,7 +265,6 @@ cdef inline void _check_db(void *db) except *:
         raise LevelDBException("The database has been closed.")
 
 
-@cython.final
 cdef class Iterator:
     cdef leveldb_iterator_t *it
     cdef object __weakref__
@@ -288,7 +287,6 @@ cdef class Iterator:
         self.destroy()
 
 
-@cython.final
 cdef class LevelDB:
     cdef leveldb_t * db
     cdef leveldb_readoptions_t * read_options

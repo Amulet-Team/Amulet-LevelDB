@@ -26,8 +26,8 @@ def get_bin_dir() -> str:
 def get_bin_name() -> str:
     return {
         "win32": "leveldb.dll",
-        "linux_x86_64": "libleveldb.so",
-        "macosx_10_9_x86_64": "libleveldb.dylib",
+        "linux": "libleveldb.so",
+        "darwin": "libleveldb.dylib",
     }[sys.platform]
 
 

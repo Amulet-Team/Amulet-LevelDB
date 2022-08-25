@@ -26,7 +26,7 @@ elif sys.platform == "linux":
         ("DLLX", "")
     ]
     extra_objects = []
-    libraries = ["zlib"]
+    libraries = ["z"]
 elif sys.platform == "darwin":
     define_macros = [
         ("LEVELDB_PLATFORM_POSIX", None),
@@ -34,7 +34,7 @@ elif sys.platform == "darwin":
         ("DLLX", "")
     ]
     extra_objects = []
-    libraries = ["zlib"]
+    libraries = ["z"]
 else:
     raise Exception("Unsupported platform")
 

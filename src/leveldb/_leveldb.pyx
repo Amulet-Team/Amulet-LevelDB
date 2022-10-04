@@ -150,6 +150,7 @@ cdef class LevelDB:
     cdef ReadOptions read_options
     cdef WriteOptions write_options
     cdef object iterators
+    cdef object __weakref__
 
     def __init__(self, str path, bool create_if_missing = False):
         """

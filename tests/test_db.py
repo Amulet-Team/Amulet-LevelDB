@@ -109,8 +109,7 @@ class LevelDBTestCase(unittest.TestCase):
 
             # if the db is closed all of these functions should error
             # they should not cause segmentation faults
-            with self.assertRaises(LevelDBException):
-                db.close()
+            db.close()  # This should do nothing.
             with self.assertRaises(LevelDBException):
                 db.get(b"key")
             with self.assertRaises(LevelDBException):

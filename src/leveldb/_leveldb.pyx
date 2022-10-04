@@ -4,6 +4,7 @@ import os
 from typing import Dict, Iterator as IteratorT, Optional
 from libcpp.string cimport string
 from libcpp cimport bool
+from libcpp.memory cimport shared_ptr, make_shared
 from weakref import WeakSet
 
 from leveldb_mcpe cimport (
@@ -23,6 +24,17 @@ from leveldb_mcpe cimport (
     Iterator as CIterator,
     RepairDB,
 )
+
+
+cdef extern from "<shared_mutex>" namespace "std" nogil:
+    cdef cppclass shared_mutex:
+        pass
+    cdef cppclass shared_lock[T]:
+        shared_lock(shared_mutex)
+
+cdef extern from "<mutex>" namespace "std" nogil:
+    cdef cppclass unique_lock[T]:
+        unique_lock(shared_mutex)
 
 
 class LevelDBException(Exception):
@@ -149,6 +161,7 @@ cdef class LevelDB:
     cdef DB *db
     cdef ReadOptions read_options
     cdef WriteOptions write_options
+    cdef shared_mutex _mutex
     cdef object iterators
     cdef object __weakref__
 
@@ -200,25 +213,26 @@ cdef class LevelDB:
 
         :param compact: If True will compact the database making it take less memory.
         """
+        cdef shared_ptr[unique_lock[shared_mutex]] lock = make_shared[unique_lock[shared_mutex]](self._mutex)
         cdef Iterator iterator
-        if self.db is NULL:
-            raise LevelDBException("The database has already been closed")
-        if compact:
-            self.compact()
-        for iterator in self.iterators:
-            iterator.destroy()
-        del self.db
-        self.db = NULL
+        if self.db is not NULL:
+            if compact:
+                self.compact()
+            for iterator in self.iterators:
+                iterator.destroy()
+            del self.db
+            self.db = NULL
 
     def __del__(self):
-        if self.db is not NULL:
-            self.close()
+        self.close()
 
     cpdef void compact(self) except *:
+        cdef shared_ptr[shared_lock[shared_mutex]] lock = make_shared[shared_lock[shared_mutex]](self._mutex)
         _check_db(self.db)
         self.db.CompactRange(NULL, NULL)
 
     cdef void Put(self, string key, string value) nogil except *:
+        cdef shared_ptr[shared_lock[shared_mutex]] lock = make_shared[shared_lock[shared_mutex]](self._mutex)
         _check_db(self.db)
         cdef Status status = self.db.Put(self.write_options, Slice(key), Slice(value))
         if not status.ok():
@@ -236,6 +250,7 @@ cdef class LevelDB:
         :return: The data stored behind the given key.
         :raises: KeyError if the requested key is not present.
         """
+        cdef shared_ptr[shared_lock[shared_mutex]] lock = make_shared[shared_lock[shared_mutex]](self._mutex)
         _check_db(self.db)
         cdef string value
         cdef Status status = self.db.Get(self.read_options, Slice(key), &value)
@@ -257,6 +272,7 @@ cdef class LevelDB:
 
         :param data: A dictionary of keys and values to add to the database
         """
+        cdef shared_ptr[shared_lock[shared_mutex]] lock = make_shared[shared_lock[shared_mutex]](self._mutex)
         _check_db(self.db)
         cdef string k, s
         cdef object v
@@ -279,8 +295,8 @@ cdef class LevelDB:
 
         :param key: The key to delete from the database.
         """
+        cdef shared_ptr[shared_lock[shared_mutex]] lock = make_shared[shared_lock[shared_mutex]](self._mutex)
         _check_db(self.db)
-
         cdef Status status = self.db.Delete(self.write_options, Slice(key))
         if not status.ok():
             raise LevelDBException(status.ToString())
@@ -294,6 +310,7 @@ cdef class LevelDB:
         self.Delete(key)
 
     cpdef Iterator new_iterator(self):
+        cdef shared_ptr[shared_lock[shared_mutex]] lock = make_shared[shared_lock[shared_mutex]](self._mutex)
         _check_db(self.db)
         cdef CIterator *c_iterator = self.db.NewIterator(self.read_options)
         cdef Iterator iterator = Iterator.wrap(c_iterator)

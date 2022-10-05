@@ -44,6 +44,10 @@ class LevelDBException(Exception):
     pass
 
 
+class LevelDBEncrypted(LevelDBException):
+    pass
+
+
 class LevelDBIteratorException(LevelDBException):
     """
     The exception thrown for issues related to the iterator.
@@ -199,13 +203,16 @@ cdef class LevelDB:
         cdef Status status
         status = self.db.Open(options, s_path, &self.db)
         if not status.ok():
+            msg = status.ToString()
             if status.IsCorruption():
                 RepairDB(s_path, options)
                 status = self.db.Open(options, s_path, &self.db)
                 if not status.ok():
-                    raise LevelDBException("Could not recover corrupted database.")
+                    raise LevelDBException(f"Could not recover corrupted database. {msg}")
             else:
-                raise LevelDBException(status.ToString())
+                if status.IsNotSupportedError() and msg.endswith("Marketplace worlds are not supported."):
+                    raise LevelDBEncrypted
+                raise LevelDBException(msg)
 
     cpdef void close(self, unsigned char compact=False) except *:
         """

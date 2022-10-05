@@ -101,6 +101,7 @@ setup(
                 "leveldb-mcpe/include",
             ],
             language="c++",
+            extra_compile_args=["-std=c++17"],
             extra_objects=extra_objects,
             libraries=libraries,
             define_macros=define_macros,

@@ -8,6 +8,12 @@ sys.path.append(os.path.dirname(__file__))
 import versioneer
 sys.path.remove(os.path.dirname(__file__))
 
+define_macros = []
+extra_compile_args = []
+extra_link_args = []
+libraries = []
+extra_objects = []
+
 if sys.platform == "win32":
     define_macros = [
         ("WIN32", None),
@@ -19,13 +25,11 @@ if sys.platform == "win32":
         extra_objects = ["bin/zlib/win64/zlibstatic.lib"]
     else:  # 32 bit python
         extra_objects = ["bin/zlib/win32/zlibstatic.lib"]
-    libraries = []
 elif sys.platform == "linux":
     define_macros = [
         ("LEVELDB_PLATFORM_POSIX", None),
         ("DLLX", "")
     ]
-    extra_objects = []
     libraries = ["z"]
 elif sys.platform == "darwin":
     define_macros = [
@@ -33,8 +37,10 @@ elif sys.platform == "darwin":
         ("OS_MACOSX", None),
         ("DLLX", "")
     ]
-    extra_objects = []
     libraries = ["z"]
+    # shared_mutex needs MacOS 10.12+
+    extra_compile_args = ["-mmacosx-version-min=10.12", "-Werror=partial-availability"]
+    extra_link_args = ["-Wl,-no_weak_imports"]
 else:
     raise Exception("Unsupported platform")
 
@@ -101,7 +107,8 @@ setup(
                 "leveldb-mcpe/include",
             ],
             language="c++",
-            extra_compile_args=["-std=c++17"],
+            extra_compile_args=["-std=c++17", *extra_compile_args],
+            extra_link_args=extra_link_args,
             extra_objects=extra_objects,
             libraries=libraries,
             define_macros=define_macros,

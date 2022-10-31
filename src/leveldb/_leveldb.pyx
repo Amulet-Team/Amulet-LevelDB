@@ -5,6 +5,7 @@ from typing import Dict, Iterator as IteratorT, Optional
 from libcpp.string cimport string
 from libcpp cimport bool
 from libcpp.memory cimport shared_ptr, make_shared
+from cython.operator cimport dereference
 from weakref import WeakSet
 
 from leveldb_mcpe cimport (
@@ -187,26 +188,27 @@ cdef class LevelDB:
             else:
                 raise LevelDBException(f"No database exists to open at {path}")
 
-        cdef Options options
+        cdef Options* options = new Options()
         options.create_if_missing = create_if_missing
         options.filter_policy = NewBloomFilterPolicy(10)
         options.block_cache = NewLRUCache(40 * 1024 * 1024)
         options.write_buffer_size = 4 * 1024 * 1024
         options.info_log = new NullLogger()
-        options.compressors[0] = new ZlibCompressorRaw()
-        options.compressors[1] = new ZlibCompressor()
+        options.compressors[0] = new ZlibCompressorRaw(-1)
+        options.compressors[1] = new ZlibCompressor(-1)
         options.block_size = 163840
+        cdef const Options* const_options = options
 
         self.read_options.decompress_allocator = new DecompressAllocator()
 
         cdef string s_path = path.encode()
         cdef Status status
-        status = self.db.Open(options, s_path, &self.db)
+        status = self.db.Open(dereference(const_options), s_path, &self.db)
         if not status.ok():
             msg = status.ToString()
             if status.IsCorruption():
-                RepairDB(s_path, options)
-                status = self.db.Open(options, s_path, &self.db)
+                RepairDB(s_path, dereference(const_options))
+                status = self.db.Open(dereference(const_options), s_path, &self.db)
                 if not status.ok():
                     raise LevelDBException(f"Could not recover corrupted database. {msg}")
             else:

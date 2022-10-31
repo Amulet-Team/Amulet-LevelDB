@@ -186,10 +186,10 @@ cdef extern from "leveldb/compressor.h" namespace "leveldb":
 
 cdef extern from "leveldb/zlib_compressor.h" namespace "leveldb":
     cdef cppclass ZlibCompressor(Compressor):
-        ZlibCompressor(int compressionLevel = -1) nogil except +
+        ZlibCompressor(int compressionLevel) nogil except +
 
     cdef cppclass ZlibCompressorRaw(Compressor):
-        ZlibCompressorRaw(int compressionLevel = -1) nogil except +
+        ZlibCompressorRaw(int compressionLevel) nogil except +
 
 cdef extern from "leveldb/decompress_allocator.h" namespace "leveldb":
     cdef cppclass DecompressAllocator:

@@ -226,7 +226,7 @@ cdef class LevelDB:
         cdef Iterator iterator
         if self.db is not NULL:
             if compact:
-                self.compact()
+                self.db.CompactRange(NULL, NULL)
             for iterator in self.iterators:
                 iterator.destroy()
             del self.db

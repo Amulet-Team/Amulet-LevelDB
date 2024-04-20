@@ -2,11 +2,18 @@ import unittest
 from leveldb import LevelDB, LevelDBException
 import struct
 from tempfile import TemporaryDirectory
+from uuid import uuid4
+import glob
+import os
 
 num_keys = [struct.pack("<Q", i) for i in range(10_000)]
 num_db = dict(zip(num_keys, num_keys))
 incr_db = {f"key{i}".encode("utf-8"): f"val{i}".encode("utf-8") for i in range(10_000)}
 full_db = {**incr_db, **num_db}
+
+
+def get_directory_size(path: str):
+    return sum((os.path.getsize(item.path) for item in os.scandir(path) if item.is_file()))
 
 
 class LevelDBTestCase(unittest.TestCase):
@@ -209,6 +216,65 @@ class LevelDBTestCase(unittest.TestCase):
             }, dict(db))
 
             db.close()
+
+    def test_lock(self) -> None:
+        with TemporaryDirectory() as path:
+            db = LevelDB(path, True)
+            db.close()
+
+            manifest_paths = glob.glob(os.path.join(path, "MANIFEST-*"))
+            self.assertEqual(1, len(manifest_paths))
+            manifest_path = manifest_paths[0]
+
+            db = LevelDB(path, True)
+            try:
+                manifest_paths = glob.glob(os.path.join(path, "MANIFEST-*"))
+                self.assertEqual(1, len(manifest_paths))
+                self.assertNotEqual(manifest_path, manifest_paths[0])
+            finally:
+                db.close()
+
+    def test_compact(self) -> None:
+        with TemporaryDirectory() as path:
+            db = LevelDB(path, True)
+            try:
+                for _ in range(100_000):
+                    key = str(uuid4()).encode()
+                    db.put(key, key)
+            finally:
+                db.close()
+
+            self.assertGreater(get_directory_size(path), 1_000_000)
+
+            db = LevelDB(path)
+            try:
+                for key in db.keys():
+                    db.delete(key)
+                db.compact()
+            finally:
+                db.close()
+
+            self.assertLess(get_directory_size(path), 10_000)
+
+    def test_corrupt(self) -> None:
+        """Test how the library handles a corrupt db."""
+        with TemporaryDirectory() as path:
+            db = LevelDB(path, True)
+            try:
+                for _ in range(100_000):
+                    key = str(uuid4()).encode()
+                    db.put(key, key)
+            finally:
+                db.close()
+
+            # delete one of the ldb files
+            os.remove(next(glob.iglob(os.path.join(glob.escape(path), "*.ldb"))))
+
+            db = LevelDB(path, True)
+            try:
+                self.assertTrue(40_000 <= len(list(db.keys())) < 100_000)
+            finally:
+                db.close()
 
 
 if __name__ == "__main__":

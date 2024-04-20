@@ -4,3 +4,4 @@
 [submodule "leveldb-mcpe"]
 	path = leveldb-mcpe
 	url = https://github.com/Amulet-Team/leveldb-mcpe
+    branch = current-lock

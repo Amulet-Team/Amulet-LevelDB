@@ -10,16 +10,16 @@ full_db = {**incr_db, **num_db}
 
 
 class LevelDBTestCase(unittest.TestCase):
-    def test_create_ldb(self):
+    def test_create_ldb(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
             db.close()
 
-    def test_create_fail(self):
+    def test_create_fail(self) -> None:
         with self.assertRaises(LevelDBException):
             LevelDB("path")
 
-    def test_read_write(self):
+    def test_read_write(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
 
@@ -38,7 +38,7 @@ class LevelDBTestCase(unittest.TestCase):
 
             db.close()
 
-    def test_put(self):
+    def test_put(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
 
@@ -54,7 +54,7 @@ class LevelDBTestCase(unittest.TestCase):
 
             db.close()
 
-    def test_get_set_item(self):
+    def test_get_set_item(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
 
@@ -66,7 +66,7 @@ class LevelDBTestCase(unittest.TestCase):
 
             db.close()
 
-    def test_contains(self):
+    def test_contains(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
 
@@ -78,7 +78,7 @@ class LevelDBTestCase(unittest.TestCase):
 
             db.close()
 
-    def test_delete(self):
+    def test_delete(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
 
@@ -102,7 +102,7 @@ class LevelDBTestCase(unittest.TestCase):
 
             db.close()
 
-    def test_exception(self):
+    def test_exception(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
             db.close()
@@ -129,7 +129,7 @@ class LevelDBTestCase(unittest.TestCase):
             with self.assertRaises(LevelDBException):
                 list(db)
 
-    def test_iterate_twice(self):
+    def test_iterate_twice(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
             db.putBatch({
@@ -152,7 +152,7 @@ class LevelDBTestCase(unittest.TestCase):
 
             db.close()
 
-    def test_keys_twice(self):
+    def test_keys_twice(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
             db.putBatch({
@@ -175,7 +175,7 @@ class LevelDBTestCase(unittest.TestCase):
 
             db.close()
 
-    def test_iter_mutate(self):
+    def test_iter_mutate(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
             db.putBatch({

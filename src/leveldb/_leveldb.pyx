@@ -205,11 +205,13 @@ cdef class LevelDB:
         cdef Status status
         status = self.db.Open(dereference(const_options), s_path, &self.db)
         if not status.ok():
+            del self.db
             msg = status.ToString()
             if status.IsCorruption():
                 RepairDB(s_path, dereference(const_options))
                 status = self.db.Open(dereference(const_options), s_path, &self.db)
                 if not status.ok():
+                    del self.db
                     raise LevelDBException(f"Could not recover corrupted database. {msg}")
             else:
                 if status.IsNotSupportedError() and msg.endswith("Marketplace worlds are not supported."):

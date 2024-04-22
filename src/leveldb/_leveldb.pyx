@@ -55,7 +55,7 @@ class LevelDBIteratorException(LevelDBException):
     """
 
 
-cdef extern from *:
+cdef extern from * nogil:
     """
     class NullLogger : public leveldb::Logger {
     	public:
@@ -63,10 +63,10 @@ cdef extern from *:
     };
     """
     cdef cppclass NullLogger(Logger):
-        void Logv(const char *, va_list) nogil except +
+        void Logv(const char *, va_list) except +
 
 
-cdef inline bint _check_iterator(CIterator *iterator) nogil except -1:
+cdef inline bint _check_iterator(CIterator *iterator) except -1 nogil:
     if iterator is NULL:
         with gil:
             raise LevelDBIteratorException("The iterator has been deleted.")
@@ -94,7 +94,7 @@ cdef class Iterator:
             del self.iterator
             self.iterator = NULL
 
-    cdef CIterator* get_c_iterator(self) nogil except NULL:
+    cdef CIterator* get_c_iterator(self) except NULL nogil:
         """Get the C iterator object."""
         _check_iterator(self.iterator)
         return self.iterator
@@ -156,7 +156,7 @@ cdef class Iterator:
         return self.iterator.value().ToString()
 
 
-cdef inline bint _check_db(DB *db) nogil except -1:
+cdef inline bint _check_db(DB *db) except -1 nogil:
     if db is NULL:
         with gil:
             raise LevelDBException("The database has been closed.")
@@ -205,11 +205,13 @@ cdef class LevelDB:
         cdef Status status
         status = self.db.Open(dereference(const_options), s_path, &self.db)
         if not status.ok():
+            del self.db
             msg = status.ToString()
             if status.IsCorruption():
                 RepairDB(s_path, dereference(const_options))
                 status = self.db.Open(dereference(const_options), s_path, &self.db)
                 if not status.ok():
+                    del self.db
                     raise LevelDBException(f"Could not recover corrupted database. {msg}")
             else:
                 if status.IsNotSupportedError() and msg.endswith("Marketplace worlds are not supported."):
@@ -240,7 +242,7 @@ cdef class LevelDB:
         _check_db(self.db)
         self.db.CompactRange(NULL, NULL)
 
-    cdef void Put(self, string key, string value) nogil except *:
+    cdef void Put(self, string key, string value) except * nogil:
         cdef shared_ptr[shared_lock[shared_mutex]] lock = make_shared[shared_lock[shared_mutex]](self._mutex)
         _check_db(self.db)
         cdef Status status = self.db.Put(self.write_options, Slice(key), Slice(value))
@@ -251,7 +253,7 @@ cdef class LevelDB:
     def put(self, string key, string value):
         self.Put(key, value)
 
-    cdef string Get(self, string key) nogil except *:
+    cdef string Get(self, string key) except * nogil:
         """
         Get a key from the database.
 
@@ -298,7 +300,7 @@ cdef class LevelDB:
         if not status.ok():
             raise LevelDBException(status.ToString())
 
-    cdef void Delete(self, string key) nogil except *:
+    cdef void Delete(self, string key) except * nogil:
         """
         Delete a key from the database.
 

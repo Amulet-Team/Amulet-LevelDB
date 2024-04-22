@@ -1,54 +1,54 @@
 from libcpp.string cimport string
 from libcpp cimport bool
 
-cdef extern from "leveldb/db.h" namespace "leveldb":
+cdef extern from "leveldb/db.h" namespace "leveldb" nogil:
     cdef cppclass DB:
-        DB() nogil except +
+        DB() except +
         # ~DB() except +
         Status Open(
             const Options &options,
             const string &name,
             DB** dbptr,
-        ) nogil
+        )
         Status Put(
             const WriteOptions &options,
             const Slice &key,
             const Slice &value
-        ) nogil
+        )
         Status Delete(
             const WriteOptions& options,
             const Slice& key
-        ) nogil
+        )
         Status Write(
             const WriteOptions& options,
             WriteBatch* updates
-        ) nogil
+        )
         Status Get(
             const ReadOptions & options,
             const Slice & key,
             string *value
-        ) nogil
+        )
         Iterator * NewIterator(
             const ReadOptions& options
-        ) nogil
-        const Snapshot * GetSnapshot() nogil
+        )
+        const Snapshot * GetSnapshot()
         void ReleaseSnapshot(
             const Snapshot * snapshot
-        ) nogil
+        )
         bool GetProperty(
             const Slice& property, string* value
-        ) nogil
+        )
         void GetApproximateSizes(
             const Range* range, int n, unsigned long long* sizes
-        ) nogil
+        )
         void CompactRange(
             const Slice * begin, const Slice * end
-        ) nogil
-        void SuspendCompaction() nogil
-        void ResumeCompaction() nogil
+        )
+        void SuspendCompaction()
+        void ResumeCompaction()
 
-    Status DestroyDB(const string& name, const Options& options) nogil
-    Status RepairDB(const string& dbname, const Options& options) nogil
+    Status DestroyDB(const string& name, const Options& options)
+    Status RepairDB(const string& dbname, const Options& options)
 
     cdef cppclass Snapshot:
         pass
@@ -56,10 +56,10 @@ cdef extern from "leveldb/db.h" namespace "leveldb":
     cdef cppclass Range:
         Slice start
         Slice limit
-        Range() nogil
-        Range(const Slice& s, const Slice& l) nogil
+        Range()
+        Range(const Slice& s, const Slice& l)
 
-cdef extern from "leveldb/status.h" namespace "leveldb":
+cdef extern from "leveldb/status.h" namespace "leveldb" nogil:
     cdef cppclass Status:
         enum Code:
             kOk = 0,
@@ -68,19 +68,19 @@ cdef extern from "leveldb/status.h" namespace "leveldb":
             kNotSupported = 3,
             kInvalidArgument = 4,
             kIOError = 5
-        Status() nogil except +
+        Status() except +
         # ~Status() except +
-        bool ok() nogil
-        bool IsNotFound() nogil
-        bool IsCorruption() nogil
-        bool IsIOError() nogil
-        bool IsNotSupportedError() nogil
-        bool IsInvalidArgument() nogil
-        string ToString() nogil
+        bool ok()
+        bool IsNotFound()
+        bool IsCorruption()
+        bool IsIOError()
+        bool IsNotSupportedError()
+        bool IsInvalidArgument()
+        string ToString()
 
-cdef extern from "leveldb/options.h" namespace "leveldb":
+cdef extern from "leveldb/options.h" namespace "leveldb" nogil:
     cdef cppclass Options:
-        Options() nogil except +
+        Options() except +
         const Comparator * comparator
         bool create_if_missing
         bool error_if_exists
@@ -103,94 +103,94 @@ cdef extern from "leveldb/options.h" namespace "leveldb":
         const Snapshot* snapshot
         DecompressAllocator* decompress_allocator
 
-        ReadOptions() nogil except +
+        ReadOptions() except +
 
     cdef cppclass WriteOptions:
         bool sync
 
-        WriteOptions() nogil except +
+        WriteOptions() except +
 
-cdef extern from "leveldb/write_batch.h" namespace "leveldb":
+cdef extern from "leveldb/write_batch.h" namespace "leveldb" nogil:
     cdef cppclass WriteBatch:
-        WriteBatch() nogil
-        void Put(const Slice& key, const Slice& value) nogil
-        void Delete(const Slice& key) nogil
-        void Clear() nogil
-        size_t ApproximateSize() nogil
+        WriteBatch()
+        void Put(const Slice& key, const Slice& value)
+        void Delete(const Slice& key)
+        void Clear()
+        size_t ApproximateSize()
 
-cdef extern from "leveldb/iterator.h" namespace "leveldb":
+cdef extern from "leveldb/iterator.h" namespace "leveldb" nogil:
     cdef cppclass Iterator:
-        Iterator() nogil
-        bool Valid() nogil
-        void SeekToFirst() nogil
-        void SeekToLast() nogil
-        void Seek(const Slice& target) nogil
-        void Next() nogil
-        void Prev() nogil
-        Slice key() nogil
-        Slice value() nogil
-        Status status() nogil
+        Iterator()
+        bool Valid()
+        void SeekToFirst()
+        void SeekToLast()
+        void Seek(const Slice& target)
+        void Next()
+        void Prev()
+        Slice key()
+        Slice value()
+        Status status()
 
-cdef extern from "leveldb/decompress_allocator.h" namespace "leveldb":
+cdef extern from "leveldb/decompress_allocator.h" namespace "leveldb" nogil:
     cdef cppclass DecompressAllocator:
         pass
 
-cdef extern from "leveldb/comparator.h" namespace "leveldb":
+cdef extern from "leveldb/comparator.h" namespace "leveldb" nogil:
     cdef cppclass Comparator:
         pass
         # ~Comparator() except +
 
-cdef extern from "leveldb/env.h" namespace "leveldb":
+cdef extern from "leveldb/env.h" namespace "leveldb" nogil:
     ctypedef struct va_list
 
     cdef cppclass Env:
         pass
 
     cdef cppclass Logger:
-        Logger() nogil
+        Logger()
         # ~Logger()
-        void Logv(const char * format, va_list ap) nogil
+        void Logv(const char * format, va_list ap)
 
-cdef extern from "leveldb/cache.h" namespace "leveldb":
+cdef extern from "leveldb/cache.h" namespace "leveldb" nogil:
     cdef cppclass Cache:
-        Cache() nogil except +
+        Cache() except +
 
-    Cache * NewLRUCache(size_t capacity) nogil
+    Cache * NewLRUCache(size_t capacity)
 
-cdef extern from "leveldb/slice.h" namespace "leveldb":
+cdef extern from "leveldb/slice.h" namespace "leveldb" nogil:
     cdef cppclass Slice:
-        Slice() nogil except +
-        Slice(const char * d, size_t n) nogil except +
-        Slice(const string &s) nogil except +
-        Slice(const char * s) nogil except +
+        Slice() except +
+        Slice(const char * d, size_t n) except +
+        Slice(const string &s) except +
+        Slice(const char * s) except +
         const char * data()
         size_t size()
         bool empty()
         void clear()
         string ToString()
 
-cdef extern from "leveldb/compressor.h" namespace "leveldb":
+cdef extern from "leveldb/compressor.h" namespace "leveldb" nogil:
     cdef cppclass Compressor:
         pass
 
-cdef extern from "leveldb/filter_policy.h" namespace "leveldb":
+cdef extern from "leveldb/filter_policy.h" namespace "leveldb" nogil:
     cdef cppclass FilterPolicy:
-        const char* Name() nogil except +
-        void CreateFilter(const Slice* keys, int n, string* dst) nogil
-        bool KeyMayMatch(const Slice& key, const Slice& filter) nogil
-    const FilterPolicy * NewBloomFilterPolicy(int bits_per_key) nogil
+        const char* Name() except +
+        void CreateFilter(const Slice* keys, int n, string* dst)
+        bool KeyMayMatch(const Slice& key, const Slice& filter)
+    const FilterPolicy * NewBloomFilterPolicy(int bits_per_key)
 
-cdef extern from "leveldb/compressor.h" namespace "leveldb":
+cdef extern from "leveldb/compressor.h" namespace "leveldb" nogil:
     cdef cppclass Compressor:
         pass
 
-cdef extern from "leveldb/zlib_compressor.h" namespace "leveldb":
+cdef extern from "leveldb/zlib_compressor.h" namespace "leveldb" nogil:
     cdef cppclass ZlibCompressor(Compressor):
-        ZlibCompressor(int compressionLevel) nogil except +
+        ZlibCompressor(int compressionLevel) except +
 
     cdef cppclass ZlibCompressorRaw(Compressor):
-        ZlibCompressorRaw(int compressionLevel) nogil except +
+        ZlibCompressorRaw(int compressionLevel) except +
 
-cdef extern from "leveldb/decompress_allocator.h" namespace "leveldb":
+cdef extern from "leveldb/decompress_allocator.h" namespace "leveldb" nogil:
     cdef cppclass DecompressAllocator:
         pass

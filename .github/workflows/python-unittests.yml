@@ -18,7 +18,6 @@ jobs:
     strategy:
       matrix:
         cfg:
-          - { os: ubuntu-latest, architecture: x64, python-version: "3.7" }
           - { os: windows-latest, architecture: x64, python-version: "3.8" }
           - { os: windows-latest, architecture: x86, python-version: "3.8" }
           - { os: macos-13, architecture: x64, python-version: "3.8" }

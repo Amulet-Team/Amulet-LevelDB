@@ -13,9 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: windows-latest, architecture: x64, python-version: "3.7" }
-          - { os: windows-latest, architecture: x86, python-version: "3.7" }
-          - { os: macos-latest, architecture: x64, python-version: "3.7" }
           - { os: windows-latest, architecture: x64, python-version: "3.8" }
           - { os: windows-latest, architecture: x86, python-version: "3.8" }
           - { os: macos-latest, architecture: x64, python-version: "3.8" }

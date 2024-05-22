@@ -10,6 +10,7 @@ on:
 jobs:
   deploy:
     strategy:
+      fail-fast: false
       matrix:
         cfg:
           - { os: windows-latest, architecture: x64, python-version: "3.7" }

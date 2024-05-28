@@ -6,6 +6,7 @@ from Cython.Build import cythonize
 
 sys.path.append(os.path.dirname(__file__))
 import versioneer
+
 sys.path.remove(os.path.dirname(__file__))
 
 define_macros = []
@@ -16,36 +17,41 @@ extra_objects = []
 extra_sources = []
 
 if sys.platform == "win32":
-    define_macros.extend([
-        ("WIN32", None),
-        ("_WIN32_WINNT", "0x0601"),
-        ("LEVELDB_PLATFORM_WINDOWS", None),
-        ("DLLX", "__declspec(dllexport)")
-    ])
-    extra_sources.extend([
-        "./leveldb-mcpe/port/port_win.cc",
-        "./leveldb-mcpe/util/env_win.cc",
-        "./leveldb-mcpe/util/win_logger.cc",
-    ])
-    if sys.maxsize > 2 ** 32:  # 64 bit python
+    define_macros.extend(
+        [
+            ("WIN32", None),
+            ("_WIN32_WINNT", "0x0601"),
+            ("LEVELDB_PLATFORM_WINDOWS", None),
+            ("DLLX", "__declspec(dllexport)"),
+        ]
+    )
+    extra_sources.extend(
+        [
+            "./leveldb-mcpe/port/port_win.cc",
+            "./leveldb-mcpe/util/env_win.cc",
+            "./leveldb-mcpe/util/win_logger.cc",
+        ]
+    )
+    if sys.maxsize > 2**32:  # 64 bit python
         extra_objects.append("bin/zlib/win64/zlibstatic.lib")
     else:  # 32 bit python
         extra_objects.append("bin/zlib/win32/zlibstatic.lib")
 elif sys.platform in ["linux", "darwin"]:
-    define_macros.extend([
-        ("LEVELDB_PLATFORM_POSIX", None),
-        ("DLLX", "")
-    ])
-    extra_sources.extend([
-        "./leveldb-mcpe/port/port_posix.cc",
-        "./leveldb-mcpe/util/env_posix.cc",
-    ])
+    define_macros.extend([("LEVELDB_PLATFORM_POSIX", None), ("DLLX", "")])
+    extra_sources.extend(
+        [
+            "./leveldb-mcpe/port/port_posix.cc",
+            "./leveldb-mcpe/util/env_posix.cc",
+        ]
+    )
     libraries.append("z")
 
     if sys.platform == "darwin":
         define_macros.append(("OS_MACOSX", None))
         # shared_mutex needs MacOS 10.12+
-        extra_compile_args.extend(["-mmacosx-version-min=10.12", "-Werror=partial-availability"])
+        extra_compile_args.extend(
+            ["-mmacosx-version-min=10.12", "-Werror=partial-availability"]
+        )
         extra_link_args.extend(["-Wl,-no_weak_imports"])
 else:
     raise Exception("Unsupported platform")
@@ -73,8 +79,6 @@ setup(
                 "./leveldb-mcpe/db/version_edit.cc",
                 "./leveldb-mcpe/db/version_set.cc",
                 "./leveldb-mcpe/db/write_batch.cc",
-
-
                 "./leveldb-mcpe/table/block.cc",
                 "./leveldb-mcpe/table/block_builder.cc",
                 "./leveldb-mcpe/table/filter_block.cc",
@@ -84,7 +88,6 @@ setup(
                 "./leveldb-mcpe/table/table.cc",
                 "./leveldb-mcpe/table/table_builder.cc",
                 "./leveldb-mcpe/table/two_level_iterator.cc",
-
                 "./leveldb-mcpe/util/arena.cc",
                 "./leveldb-mcpe/util/bloom.cc",
                 "./leveldb-mcpe/util/cache.cc",
@@ -98,12 +101,10 @@ setup(
                 "./leveldb-mcpe/util/logging.cc",
                 "./leveldb-mcpe/util/options.cc",
                 "./leveldb-mcpe/util/status.cc",
-
                 "./leveldb-mcpe/db/zlib_compressor.cc",
                 "./leveldb-mcpe/db/zstd_compressor.cc",
                 "./leveldb-mcpe/port/port_posix_sse.cc",
-
-                *extra_sources
+                *extra_sources,
             ],
             include_dirs=[
                 "zlib",
@@ -118,5 +119,5 @@ setup(
             define_macros=define_macros,
         ),
         language_level=3,
-    )
+    ),
 )

@@ -1,22 +1,19 @@
 from typing import Dict, Iterator as PyIterator, Tuple
 
-
 class LevelDBException(Exception):
     """
     The exception thrown for all leveldb related errors.
     """
-    pass
 
+    pass
 
 class LevelDBEncrypted(LevelDBException):
     pass
-
 
 class LevelDBIteratorException(LevelDBException):
     """
     The exception thrown for issues related to the iterator.
     """
-
 
 class Iterator:
     def valid(self) -> bool:
@@ -55,7 +52,6 @@ class Iterator:
         If valid returns False this will error.
         """
 
-
 class LevelDB:
     def __init__(self, path: str, create_if_missing: bool = False): ...
     def close(self, compact: bool = False) -> None: ...
@@ -64,10 +60,12 @@ class LevelDB:
     def putBatch(self, data: Dict[bytes, bytes]) -> None: ...
     def delete(self, key: bytes) -> None: ...
     def new_iterator(self) -> Iterator: ...
-    def iterate(self, start: bytes | None = None, end: bytes | None = None) -> PyIterator[Tuple[bytes, bytes]]: ...
+    def iterate(
+        self, start: bytes | None = None, end: bytes | None = None
+    ) -> PyIterator[Tuple[bytes, bytes]]: ...
     def keys(self) -> PyIterator[bytes]: ...
     def items(self) -> PyIterator[Tuple[bytes, bytes]]: ...
-    def compact(self) -> None:...
+    def compact(self) -> None: ...
     def __contains__(self, key: bytes) -> bool: ...
     def __getitem__(self, key: bytes) -> bytes: ...
     def __setitem__(self, key: bytes, value: bytes) -> None: ...

@@ -13,7 +13,9 @@ full_db = {**incr_db, **num_db}
 
 
 def get_directory_size(path: str):
-    return sum((os.path.getsize(item.path) for item in os.scandir(path) if item.is_file()))
+    return sum(
+        (os.path.getsize(item.path) for item in os.scandir(path) if item.is_file())
+    )
 
 
 class LevelDBTestCase(unittest.TestCase):
@@ -139,14 +141,16 @@ class LevelDBTestCase(unittest.TestCase):
     def test_iterate_twice(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
-            db.putBatch({
-                b"a": b"1",
-                b"b": b"2",
-                b"c": b"3",
-                b"d": b"4",
-                b"e": b"5",
-                b"f": b"6",
-            })
+            db.putBatch(
+                {
+                    b"a": b"1",
+                    b"b": b"2",
+                    b"c": b"3",
+                    b"d": b"4",
+                    b"e": b"5",
+                    b"f": b"6",
+                }
+            )
 
             it1 = db.iterate()
             self.assertEqual((b"a", b"1"), next(it1))
@@ -162,14 +166,16 @@ class LevelDBTestCase(unittest.TestCase):
     def test_keys_twice(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
-            db.putBatch({
-                b"a": b"1",
-                b"b": b"2",
-                b"c": b"3",
-                b"d": b"4",
-                b"e": b"5",
-                b"f": b"6",
-            })
+            db.putBatch(
+                {
+                    b"a": b"1",
+                    b"b": b"2",
+                    b"c": b"3",
+                    b"d": b"4",
+                    b"e": b"5",
+                    b"f": b"6",
+                }
+            )
 
             it1 = db.keys()
             self.assertEqual(b"a", next(it1))
@@ -185,14 +191,16 @@ class LevelDBTestCase(unittest.TestCase):
     def test_iter_mutate(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
-            db.putBatch({
-                b"a": b"1",
-                b"b": b"2",
-                b"c": b"3",
-                b"d": b"4",
-                b"e": b"5",
-                b"f": b"6",
-            })
+            db.putBatch(
+                {
+                    b"a": b"1",
+                    b"b": b"2",
+                    b"c": b"3",
+                    b"d": b"4",
+                    b"e": b"5",
+                    b"f": b"6",
+                }
+            )
 
             it = db.iterate()
             self.assertEqual((b"a", b"1"), next(it))
@@ -206,14 +214,17 @@ class LevelDBTestCase(unittest.TestCase):
             with self.assertRaises(StopIteration):
                 next(it)
 
-            self.assertEqual({
-                b"a": b"1",
-                b"b": b"2",
-                b"c": b"3",
-                b"d": b"10",
-                b"e": b"5",
-                b"f": b"6",
-            }, dict(db))
+            self.assertEqual(
+                {
+                    b"a": b"1",
+                    b"b": b"2",
+                    b"c": b"3",
+                    b"d": b"10",
+                    b"e": b"5",
+                    b"f": b"6",
+                },
+                dict(db),
+            )
 
             db.close()
 

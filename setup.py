@@ -1,70 +1,63 @@
 import sys
-import os
-
+from typing import Union
+import sysconfig
 from setuptools import setup, Extension
-from Cython.Build import cythonize
-
-sys.path.append(os.path.dirname(__file__))
+from distutils import ccompiler
 import versioneer
 
-sys.path.remove(os.path.dirname(__file__))
-
-define_macros = []
-extra_compile_args = []
-extra_link_args = []
-libraries = []
-extra_objects = []
-extra_sources = []
+define_macros: list[tuple[str, Union[str, None]]] = [("PYBIND11_DETAILED_ERROR_MESSAGES", None)]
+extra_compile_args: list[str] = []
+extra_link_args: list[str] = []
+libraries: list[str] = []
+extra_objects: list[str] = []
+extra_sources: list[str] = []
 
 if sys.platform == "win32":
-    define_macros.extend(
-        [
-            ("WIN32", None),
-            ("_WIN32_WINNT", "0x0601"),
-            ("LEVELDB_PLATFORM_WINDOWS", None),
-            ("DLLX", "__declspec(dllexport)"),
-        ]
-    )
-    extra_sources.extend(
-        [
-            "./leveldb-mcpe/port/port_win.cc",
-            "./leveldb-mcpe/util/env_win.cc",
-            "./leveldb-mcpe/util/win_logger.cc",
-        ]
-    )
+    define_macros.append(("WIN32", None))
+    define_macros.append(("_WIN32_WINNT", "0x0601"))
+    define_macros.append(("LEVELDB_PLATFORM_WINDOWS", None))
+    define_macros.append(("DLLX", "__declspec(dllexport)"))
+
+    extra_sources.append("./leveldb-mcpe/port/port_win.cc")
+    extra_sources.append("./leveldb-mcpe/util/env_win.cc")
+    extra_sources.append("./leveldb-mcpe/util/win_logger.cc")
+
     if sys.maxsize > 2**32:  # 64 bit python
         extra_objects.append("bin/zlib/win64/zlibstatic.lib")
     else:  # 32 bit python
         extra_objects.append("bin/zlib/win32/zlibstatic.lib")
+
 elif sys.platform in ["linux", "darwin"]:
-    define_macros.extend([("LEVELDB_PLATFORM_POSIX", None), ("DLLX", "")])
-    extra_sources.extend(
-        [
-            "./leveldb-mcpe/port/port_posix.cc",
-            "./leveldb-mcpe/util/env_posix.cc",
-        ]
-    )
+    define_macros.append(("LEVELDB_PLATFORM_POSIX", None))
+    define_macros.append(("DLLX", ""))
+    extra_sources.append("./leveldb-mcpe/port/port_posix.cc")
+    extra_sources.append("./leveldb-mcpe/util/env_posix.cc")
     libraries.append("z")
 
     if sys.platform == "darwin":
         define_macros.append(("OS_MACOSX", None))
         # shared_mutex needs MacOS 10.12+
-        extra_compile_args.extend(
-            ["-mmacosx-version-min=10.12", "-Werror=partial-availability"]
-        )
-        extra_link_args.extend(["-Wl,-no_weak_imports"])
+        extra_compile_args.append("-mmacosx-version-min=10.12")
+        extra_compile_args.append("-Werror=partial-availability")
+        extra_link_args.append("-Wl,-no_weak_imports")
 else:
     raise Exception("Unsupported platform")
+
+compiler = sysconfig.get_config_var("CXX") or ccompiler.get_default_compiler()
+if compiler.split()[0] == "msvc":
+    extra_compile_args.append("/std:c++20")
+else:
+    extra_compile_args.append("-std=c++20")
 
 
 setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    ext_modules=cythonize(
+    ext_modules=[
         Extension(
-            name="leveldb._leveldb",
+            name="leveldb.__init__",
             sources=[
-                "./src/leveldb/_leveldb.pyx",
+                "./src/leveldb/__init__leveldb.py.cpp",
                 "./leveldb-mcpe/db/builder.cc",
                 "./leveldb-mcpe/db/c.cc",
                 "./leveldb-mcpe/db/db_impl.cc",
@@ -111,13 +104,11 @@ setup(
                 "leveldb-mcpe",
                 "leveldb-mcpe/include",
             ],
-            language="c++",
-            extra_compile_args=["-std=c++17", *extra_compile_args],
+            extra_compile_args=extra_compile_args,
             extra_link_args=extra_link_args,
             extra_objects=extra_objects,
             libraries=libraries,
             define_macros=define_macros,
         ),
-        language_level=3,
-    ),
+    ],
 )

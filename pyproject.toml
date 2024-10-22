@@ -2,7 +2,7 @@
 requires = [
     "setuptools >= 42",
     "wheel",
-    "cython >= 3.0.0a11",
+    "pybind11 ~= 2.12",
     "versioneer",
 ]
 build-backend = "setuptools.build_meta"

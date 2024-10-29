@@ -186,7 +186,7 @@ public:
         iterators.insert(ptr);
 
         // Create on destroy callback
-        auto on_destroy = [this, &ptr]() {
+        auto on_destroy = [this, ptr]() {
             // Remove the pointer from the set
             iterators.erase(ptr);
         };

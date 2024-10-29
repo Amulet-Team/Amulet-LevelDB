@@ -18,9 +18,9 @@ class LevelDB:
     A LevelDB database
     """
 
-    def __contains__(self, key: str) -> bool: ...
-    def __delitem__(self, key: str) -> None: ...
-    def __getitem__(self, key: str) -> str: ...
+    def __contains__(self, key: bytes) -> bool: ...
+    def __delitem__(self, key: bytes) -> None: ...
+    def __getitem__(self, key: bytes) -> bytes: ...
     def __init__(self, path: str, create_if_missing: bool = False) -> None:
         """
         Construct a new :class :`LevelDB` instance from the database at the given path.
@@ -33,7 +33,7 @@ class LevelDB:
         """
 
     def __iter__(self) -> LevelDBKeysIterator: ...
-    def __setitem__(self, key: str, value: str) -> None: ...
+    def __setitem__(self, key: bytes, value: bytes) -> None: ...
     def close(self, compact: bool = False) -> None:
         """
         Close the leveldb database.
@@ -51,14 +51,14 @@ class LevelDB:
         Create a new leveldb Iterator.
         """
 
-    def delete(self, key: str) -> None:
+    def delete(self, key: bytes) -> None:
         """
         Delete a key from the database.
 
         :param key: The key to delete from the database.
         """
 
-    def get(self, key: str) -> str:
+    def get(self, key: bytes) -> bytes:
         """
         Get a key from the database.
 
@@ -74,7 +74,7 @@ class LevelDB:
         """
 
     def iterate(
-        self, start: str | None = None, end: str | None = None
+        self, start: bytes | None = None, end: bytes | None = None
     ) -> LevelDBItemsIterator | LevelDBItemsRangeIterator:
         """
         Iterate through all keys and data that exist between the given keys.
@@ -88,12 +88,12 @@ class LevelDB:
         An iterable of all keys in the database.
         """
 
-    def put(self, key: str, value: str) -> None:
+    def put(self, key: bytes, value: bytes) -> None:
         """
         Set a value in the database.
         """
 
-    def put_batch(self, batch: dict[str, str | None]) -> None:
+    def put_batch(self, batch: dict[bytes, bytes | None]) -> None:
         """
         Set a group of values in the database.
         """
@@ -134,7 +134,7 @@ class LevelDBIterator:
         Seek to the previous entry in the database.
         """
 
-    def seek(self, target: str) -> None:
+    def seek(self, target: bytes) -> None:
         """
         Seek to the given entry in the database.
         If the entry does not exist it will seek to the location after.

@@ -144,7 +144,7 @@ class LevelDBTestCase(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 list(db.items())
             with self.assertRaises(RuntimeError):
-                b"key" in db
+                _ = b"key" in db
             with self.assertRaises(RuntimeError):
                 list(db)
 

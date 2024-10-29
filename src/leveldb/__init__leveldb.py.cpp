@@ -109,6 +109,9 @@ void init_leveldb(py::module m)
 
     py::dict version_data = py::module::import("leveldb._version").attr("get_versions")();
     m.attr("__version__") = version_data["version"];
+
+    py::register_local_exception<LevelDBException>(m, "LevelDBException");
+    py::register_local_exception<LevelDBEncrypted>(m, "LevelDBEncrypted");
 }
 
 PYBIND11_MODULE(__init__, m) { init_leveldb(m); }

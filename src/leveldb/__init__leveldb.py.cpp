@@ -209,6 +209,139 @@ void init_leveldb(py::module m)
             "Get the value of the current entry in the database.\n"
             ":raises: runtime_error if iterator is not valid."));
 
+    py::class_<Amulet::LevelDB> LevelDB(m, "LevelDB",
+        "A LevelDB database");
+    LevelDB.def(
+        py::init(&open_leveldb),
+        py::arg("path"),
+        py::arg("create_if_missing"),
+        py::doc(
+            "Construct a new :class :`LevelDB` instance from the database at the given path.\n"
+            "\n"
+            "A leveldb database is like a dictionary that only contains bytes as the keys and values and exists entirely on the disk.\n"
+            "\n"
+            ":param path: The path to the database directory.\n"
+            ":param create_if_missing: If True a new database will be created if one does not exist at the given path.\n"
+            ":raises: LevelDBException if create_if_missing is False and the db does not exist."));
+
+    LevelDB.def(
+        "close",
+        &Amulet::LevelDB::close,
+        py::arg("compact") = false,
+        py::doc(
+            "Close the leveldb database.\n"
+            "\n"
+            ":param compact: If True will compact the database making it take less memory."));
+
+    LevelDB.def(
+        "compact",
+        [](Amulet::LevelDB& self) {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw LevelDBException("The LevelDB database has been closed.");
+            }
+            self->CompactRange(nullptr, nullptr);
+        },
+        py::doc("Remove deleted entries from the database to reduce its size."));
+
+    auto put = [](Amulet::LevelDB& self, std::string key, std::string value) {
+        auto lock = self.lock_shared();
+        if (!self) {
+            throw LevelDBException("The LevelDB database has been closed.");
+        }
+        auto status = self->Put(self.get_write_options(), key, value);
+        if (!status.ok()) {
+            throw LevelDBException(status.ToString());
+        }
+    };
+    LevelDB.def("put", put, py::doc("Set a value in the database."));
+    LevelDB.def("__setitem__", put);
+
+    LevelDB.def(
+        "put_batch",
+        [](Amulet::LevelDB& self, const std::unordered_map<std::string, std::optional<std::string>> data) {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw LevelDBException("The LevelDB database has been closed.");
+            }
+            leveldb::WriteBatch batch;
+            for (const auto& [k, v] : data) {
+                if (v) {
+                    batch.Put(k, *v);
+                } else {
+                    batch.Delete(k);
+                }
+            }
+            leveldb::Status status = self->Write(self.get_write_options(), &batch);
+            if (!status.ok()) {
+                throw LevelDBException(status.ToString());
+            }
+        },
+        py::doc("Set a group of values in the database."));
+
+    LevelDB.def(
+        "__contains__",
+        [](Amulet::LevelDB& self, std::string key) {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw LevelDBException("The LevelDB database has been closed.");
+            }
+            std::string value;
+            return self->Get(self.get_read_options(), key, &value).ok();
+        });
+
+    auto get = [](Amulet::LevelDB& self, std::string key) {
+        auto lock = self.lock_shared();
+        if (!self) {
+            throw LevelDBException("The LevelDB database has been closed.");
+        }
+        std::string value;
+        auto status = self->Get(self.get_read_options(), key, &value);
+        switch (status.code()) {
+        case leveldb::Status::kOk:
+            return value;
+        case leveldb::Status::kNotFound:
+            throw py::key_error(key);
+        default:
+            throw LevelDBException(status.ToString());
+        }
+    };
+    LevelDB.def(
+        "get",
+        get,
+        py::doc(
+            "Get a key from the database.\n"
+            "\n"
+            ":param key: The key to get from the database.\n"
+            ":return: The data stored behind the given key.\n"
+            ":raises: KeyError if the requested key is not present.\n"
+            ":raises: LevelDBException on other error."));
+    LevelDB.def("__get_item__", get);
+
+    auto del = [](Amulet::LevelDB& self, std::string key) {
+        auto lock = self.lock_shared();
+        if (!self) {
+            throw LevelDBException("The LevelDB database has been closed.");
+        }
+        auto status = self->Delete(self.get_write_options(), key);
+        if (!status.ok()) {
+            throw LevelDBException(status.ToString());
+        }
+    };
+    LevelDB.def(
+        "delete",
+        del,
+        py::doc(
+            "Delete a key from the database.\n"
+            "\n"
+            ":param key: The key to delete from the database."));
+    LevelDB.def("__delitem__", del);
+
+    LevelDB.def(
+        "create_iterator",
+        &Amulet::LevelDB::create_iterator,
+        py::doc("Create a new leveldb Iterator."));
+
 }
 
 PYBIND11_MODULE(__init__, m) { init_leveldb(m); }

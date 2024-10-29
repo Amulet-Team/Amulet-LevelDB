@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <memory>
 #include <set>
 #include <shared_mutex>
@@ -114,11 +115,10 @@ private:
 
 public:
     LevelDB(
-        std::unique_ptr<leveldb::DB> db,
-        std::unique_ptr<LevelDBOptions> options
-    )
-        : db(std::move(db)),
-        options(std::move(options))
+        std::unique_ptr<leveldb::DB>&& db,
+        std::unique_ptr<LevelDBOptions>&& options)
+        : db(std::move(db))
+        , options(std::move(options))
     {
     }
 
@@ -176,7 +176,8 @@ public:
         }
 
         // Create the iterator
-        auto iterator = std::make_unique<LevelDBIterator>(db->NewIterator(options->read_options));
+        auto iterator = std::make_unique<LevelDBIterator>(
+            std::unique_ptr<leveldb::Iterator>(db->NewIterator(options->read_options)));
 
         // Get a raw poiner to the iterator
         LevelDBIterator* ptr = iterator.get();

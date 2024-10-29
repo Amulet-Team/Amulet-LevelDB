@@ -119,17 +119,10 @@ def main() -> None:
 
     # Call pybind11-stubgen
     print("Running pybind11-stubgen...")
-    sys.argv = [
-        "pybind11_stubgen",
+    pybind11_stubgen.main([
         f"--output-dir={src_path}",
         "leveldb",
-    ]
-    pybind11_stubgen.main()
-    # If pybind11_stubgen adds args to main
-    # pybind11_stubgen.main([
-    #     f"--output-dir={src_path}",
-    #     "leveldb",
-    # ])
+    ])
 
     # Run normal stubgen on the python files
     # print("Running stubgen...")

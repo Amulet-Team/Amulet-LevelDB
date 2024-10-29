@@ -112,6 +112,103 @@ void init_leveldb(py::module m)
 
     py::register_local_exception<LevelDBException>(m, "LevelDBException");
     py::register_local_exception<LevelDBEncrypted>(m, "LevelDBEncrypted");
+
+    py::class_<Amulet::LevelDBIterator> LevelDBIterator(m, "LevelDBIterator");
+    LevelDBIterator.def(
+        "valid",
+        [](Amulet::LevelDBIterator& self) {
+            auto lock = self.lock_shared();
+            return self && self->Valid();
+        },
+        py::doc(
+            "Is the iterator at a valid entry."
+            "If False, calls to other methods may error."));
+    LevelDBIterator.def(
+        "seek_to_first",
+        [](Amulet::LevelDBIterator& self) {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw std::runtime_error("LevelDBIterator has been deleted.");
+            }
+            self->SeekToFirst();
+        },
+        py::doc("Seek to the first entry in the database."));
+    LevelDBIterator.def(
+        "seek_to_last",
+        [](Amulet::LevelDBIterator& self) {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw std::runtime_error("LevelDBIterator has been deleted.");
+            }
+            self->SeekToLast();
+        },
+        py::doc("Seek to the last entry in the database."));
+    LevelDBIterator.def(
+        "seek",
+        [](Amulet::LevelDBIterator& self, std::string target) {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw std::runtime_error("LevelDBIterator has been deleted.");
+            }
+            self->Seek(target);
+        },
+        py::arg("target"),
+        py::doc(
+            "Seek to the given entry in the database.\n"
+            "If the entry does not exist it will seek to the location after."));
+    LevelDBIterator.def(
+        "next",
+        [](Amulet::LevelDBIterator& self) {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw std::runtime_error("LevelDBIterator has been deleted.");
+            }
+            self->Next();
+        },
+        py::doc(
+            "Seek to the next entry in the database."));
+    LevelDBIterator.def(
+        "prev",
+        [](Amulet::LevelDBIterator& self) {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw std::runtime_error("LevelDBIterator has been deleted.");
+            }
+            self->Prev();
+        },
+        py::doc(
+            "Seek to the previous entry in the database."));
+    LevelDBIterator.def(
+        "key",
+        [](Amulet::LevelDBIterator& self) {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw std::runtime_error("LevelDBIterator has been deleted.");
+            }
+            if (!self->Valid()) {
+                throw std::runtime_error("LevelDBIterator does not point to a valid value.");
+            }
+            return py::bytes(self->key().ToString());
+        },
+        py::doc(
+            "Get the key of the current entry in the database.\n"
+            ":raises: runtime_error if iterator is not valid."));
+    LevelDBIterator.def(
+        "value",
+        [](Amulet::LevelDBIterator& self) {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw std::runtime_error("LevelDBIterator has been deleted.");
+            }
+            if (!self->Valid()) {
+                throw std::runtime_error("LevelDBIterator does not point to a valid value.");
+            }
+            return py::bytes(self->value().ToString());
+        },
+        py::doc(
+            "Get the value of the current entry in the database.\n"
+            ":raises: runtime_error if iterator is not valid."));
+
 }
 
 PYBIND11_MODULE(__init__, m) { init_leveldb(m); }

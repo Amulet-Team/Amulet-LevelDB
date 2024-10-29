@@ -14,6 +14,7 @@
 #include "leveldb.hpp"
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <pybind11/typing.h>
 
 namespace py = pybind11;
@@ -41,11 +42,11 @@ public:
 };
 
 std::unique_ptr<Amulet::LevelDB> open_leveldb(
-    std::filesystem::path path,
+    std::string path_str,
     bool create_if_missing = false)
 {
     // Expand dots and symbolic links
-    path = std::filesystem::canonical(path);
+    auto path = std::filesystem::absolute(path_str);
     // If there is not a directory at the path
     if (!std::filesystem::is_directory(path)) {
         if (std::filesystem::exists(path)) {
@@ -242,6 +243,8 @@ void init_leveldb(py::module m)
     }
     init_run = true;
 
+    m.attr("__path__") = py::module::import("importlib.util").attr("find_spec")("leveldb").attr("submodule_search_locations");
+
     py::dict version_data = py::module::import("leveldb._version").attr("get_versions")();
     m.attr("__version__") = version_data["version"];
 
@@ -256,7 +259,7 @@ void init_leveldb(py::module m)
             return self && self->Valid();
         },
         py::doc(
-            "Is the iterator at a valid entry."
+            "Is the iterator at a valid entry.\n"
             "If False, calls to other methods may error."));
     LevelDBIterator.def(
         "seek_to_first",
@@ -365,7 +368,7 @@ void init_leveldb(py::module m)
     LevelDB.def(
         py::init(&open_leveldb),
         py::arg("path"),
-        py::arg("create_if_missing"),
+        py::arg("create_if_missing") = false,
         py::doc(
             "Construct a new :class :`LevelDB` instance from the database at the given path.\n"
             "\n"
@@ -389,7 +392,7 @@ void init_leveldb(py::module m)
         [](Amulet::LevelDB& self) {
             auto lock = self.lock_shared();
             if (!self) {
-                throw LevelDBException("The LevelDB database has been closed.");
+                throw std::runtime_error("The LevelDB database has been closed.");
             }
             self->CompactRange(nullptr, nullptr);
         },
@@ -398,22 +401,22 @@ void init_leveldb(py::module m)
     auto put = [](Amulet::LevelDB& self, std::string key, std::string value) {
         auto lock = self.lock_shared();
         if (!self) {
-            throw LevelDBException("The LevelDB database has been closed.");
+            throw std::runtime_error("The LevelDB database has been closed.");
         }
         auto status = self->Put(self.get_write_options(), key, value);
         if (!status.ok()) {
             throw LevelDBException(status.ToString());
         }
     };
-    LevelDB.def("put", put, py::doc("Set a value in the database."));
-    LevelDB.def("__setitem__", put);
+    LevelDB.def("put", put, py::arg("key"), py::arg("value"), py::doc("Set a value in the database."));
+    LevelDB.def("__setitem__", put, py::arg("key"), py::arg("value"));
 
     LevelDB.def(
         "put_batch",
         [](Amulet::LevelDB& self, const std::unordered_map<std::string, std::optional<std::string>> data) {
             auto lock = self.lock_shared();
             if (!self) {
-                throw LevelDBException("The LevelDB database has been closed.");
+                throw std::runtime_error("The LevelDB database has been closed.");
             }
             leveldb::WriteBatch batch;
             for (const auto& [k, v] : data) {
@@ -428,6 +431,7 @@ void init_leveldb(py::module m)
                 throw LevelDBException(status.ToString());
             }
         },
+        py::arg("batch"),
         py::doc("Set a group of values in the database."));
 
     LevelDB.def(
@@ -435,22 +439,23 @@ void init_leveldb(py::module m)
         [](Amulet::LevelDB& self, std::string key) {
             auto lock = self.lock_shared();
             if (!self) {
-                throw LevelDBException("The LevelDB database has been closed.");
+                throw std::runtime_error("The LevelDB database has been closed.");
             }
             std::string value;
             return self->Get(self.get_read_options(), key, &value).ok();
-        });
+        },
+        py::arg("key"));
 
     auto get = [](Amulet::LevelDB& self, std::string key) {
         auto lock = self.lock_shared();
         if (!self) {
-            throw LevelDBException("The LevelDB database has been closed.");
+            throw std::runtime_error("The LevelDB database has been closed.");
         }
         std::string value;
         auto status = self->Get(self.get_read_options(), key, &value);
         switch (status.code()) {
         case leveldb::Status::kOk:
-            return value;
+            return py::bytes(value);
         case leveldb::Status::kNotFound:
             throw py::key_error(key);
         default:
@@ -460,6 +465,7 @@ void init_leveldb(py::module m)
     LevelDB.def(
         "get",
         get,
+        py::arg("key"),
         py::doc(
             "Get a key from the database.\n"
             "\n"
@@ -467,12 +473,12 @@ void init_leveldb(py::module m)
             ":return: The data stored behind the given key.\n"
             ":raises: KeyError if the requested key is not present.\n"
             ":raises: LevelDBException on other error."));
-    LevelDB.def("__get_item__", get);
+    LevelDB.def("__getitem__", get, py::arg("key"));
 
     auto del = [](Amulet::LevelDB& self, std::string key) {
         auto lock = self.lock_shared();
         if (!self) {
-            throw LevelDBException("The LevelDB database has been closed.");
+            throw std::runtime_error("The LevelDB database has been closed.");
         }
         auto status = self->Delete(self.get_write_options(), key);
         if (!status.ok()) {
@@ -482,11 +488,12 @@ void init_leveldb(py::module m)
     LevelDB.def(
         "delete",
         del,
+        py::arg("key"),
         py::doc(
             "Delete a key from the database.\n"
             "\n"
             ":param key: The key to delete from the database."));
-    LevelDB.def("__delitem__", del);
+    LevelDB.def("__delitem__", del, py::arg("key"));
 
     LevelDB.def(
         "create_iterator",
@@ -502,7 +509,7 @@ void init_leveldb(py::module m)
                                                 std::shared_ptr<LevelDBItemsRangeIterator>> {
             auto lock = self.lock_shared();
             if (!self) {
-                throw LevelDBException("The LevelDB database has been closed.");
+                throw std::runtime_error("The LevelDB database has been closed.");
             }
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;

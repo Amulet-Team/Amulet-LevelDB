@@ -106,6 +106,9 @@ void init_leveldb(py::module m)
         return;
     }
     init_run = true;
+
+    py::dict version_data = py::module::import("leveldb._version").attr("get_versions")();
+    m.attr("__version__") = version_data["version"];
 }
 
 PYBIND11_MODULE(__init__, m) { init_leveldb(m); }

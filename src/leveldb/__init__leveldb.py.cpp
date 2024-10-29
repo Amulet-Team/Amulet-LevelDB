@@ -1,5 +1,7 @@
 #include <filesystem>
 #include <optional>
+#include <string>
+#include <variant>
 
 #include <leveldb/cache.h>
 #include <leveldb/db.h>
@@ -10,7 +12,9 @@
 #include <leveldb/zlib_compressor.h>
 
 #include "leveldb.hpp"
+
 #include <pybind11/pybind11.h>
+#include <pybind11/typing.h>
 
 namespace py = pybind11;
 
@@ -72,16 +76,16 @@ std::unique_ptr<Amulet::LevelDB> open_leveldb(
     switch (status.code()) {
     case leveldb::Status::kOk:
         return std::make_unique<Amulet::LevelDB>(
-            std::make_unique<leveldb::DB>(_db),
-            options);
+            std::unique_ptr<leveldb::DB>(_db),
+            std::move(options));
     case leveldb::Status::kCorruption:
         leveldb::RepairDB(path.string(), options->options);
         {
             auto status2 = leveldb::DB::Open(options->options, path.string(), &_db);
             if (status2.ok()) {
                 return std::make_unique<Amulet::LevelDB>(
-                    std::make_unique<leveldb::DB>(_db),
-                    options);
+                    std::unique_ptr<leveldb::DB>(_db),
+                    std::move(options));
             } else {
                 throw LevelDBException("Could not recover corrupted database. " + status.ToString());
             }
@@ -95,6 +99,137 @@ std::unique_ptr<Amulet::LevelDB> open_leveldb(
         throw LevelDBException(status.ToString());
     }
 }
+
+class LevelDBKeysIterator {
+private:
+    std::unique_ptr<Amulet::LevelDBIterator> iterator_ptr;
+
+public:
+    LevelDBKeysIterator(
+        std::unique_ptr<Amulet::LevelDBIterator> iterator_ptr)
+        : iterator_ptr(std::move(iterator_ptr))
+    {
+    }
+
+    py::bytes next()
+    {
+        auto lock = iterator_ptr->lock_shared();
+        auto& iterator = *iterator_ptr;
+        if (!iterator) {
+            throw std::runtime_error("LevelDBIterator has been deleted.");
+        }
+        if (!iterator->Valid()) {
+            throw py::stop_iteration();
+        }
+        // Get value.
+        auto key = py::bytes(iterator->key().ToString());
+        // Increment for next time.
+        iterator->Next();
+        // Return value
+        return key;
+    }
+};
+
+class LevelDBValuesIterator {
+private:
+    std::unique_ptr<Amulet::LevelDBIterator> iterator_ptr;
+
+public:
+    LevelDBValuesIterator(
+        std::unique_ptr<Amulet::LevelDBIterator> iterator_ptr)
+        : iterator_ptr(std::move(iterator_ptr))
+    {
+    }
+
+    py::bytes next()
+    {
+        auto lock = iterator_ptr->lock_shared();
+        auto& iterator = *iterator_ptr;
+        if (!iterator) {
+            throw std::runtime_error("LevelDBIterator has been deleted.");
+        }
+        if (!iterator->Valid()) {
+            throw py::stop_iteration();
+        }
+        // Get value.
+        auto value = py::bytes(iterator->value().ToString());
+        // Increment for next time.
+        iterator->Next();
+        // Return value
+        return value;
+    }
+};
+
+class LevelDBItemsIterator {
+private:
+    std::unique_ptr<Amulet::LevelDBIterator> iterator_ptr;
+
+public:
+    LevelDBItemsIterator(
+        std::unique_ptr<Amulet::LevelDBIterator> iterator_ptr)
+        : iterator_ptr(std::move(iterator_ptr))
+    {
+    }
+
+    py::typing::Tuple<py::bytes, py::bytes> next()
+    {
+        auto lock = iterator_ptr->lock_shared();
+        auto& iterator = *iterator_ptr;
+        if (!iterator) {
+            throw std::runtime_error("LevelDBIterator has been deleted.");
+        }
+        if (!iterator->Valid()) {
+            throw py::stop_iteration();
+        }
+        // Get value.
+        auto item = py::make_tuple(
+            py::bytes(iterator->key().ToString()),
+            py::bytes(iterator->value().ToString()));
+        // Increment for next time.
+        iterator->Next();
+        // Return value
+        return item;
+    }
+};
+
+class LevelDBItemsRangeIterator {
+private:
+    std::unique_ptr<Amulet::LevelDBIterator> iterator_ptr;
+    std::optional<std::string> end;
+
+public:
+    LevelDBItemsRangeIterator(
+        std::unique_ptr<Amulet::LevelDBIterator> iterator_ptr,
+        std::string end)
+        : iterator_ptr(std::move(iterator_ptr))
+        , end(end)
+    {
+    }
+
+    py::typing::Tuple<py::bytes, py::bytes> next()
+    {
+        auto lock = iterator_ptr->lock_shared();
+        auto& iterator = *iterator_ptr;
+        if (!iterator) {
+            throw std::runtime_error("LevelDBIterator has been deleted.");
+        }
+        if (!iterator->Valid()) {
+            throw py::stop_iteration();
+        }
+        // Get value.
+        std::string key = iterator->key().ToString();
+        if (end <= key) {
+            throw py::stop_iteration();
+        }
+        auto item = py::make_tuple(
+            py::bytes(key),
+            py::bytes(iterator->value().ToString()));
+        // Increment for next time.
+        iterator->Next();
+        // Return value
+        return item;
+    }
+};
 
 bool init_run = false;
 
@@ -208,6 +343,22 @@ void init_leveldb(py::module m)
         py::doc(
             "Get the value of the current entry in the database.\n"
             ":raises: runtime_error if iterator is not valid."));
+
+    py::class_<LevelDBKeysIterator, std::shared_ptr<LevelDBKeysIterator>>(m, "LevelDBKeysIterator")
+        .def("__iter__", [](py::object self) { return self; })
+        .def("__next__", &LevelDBKeysIterator::next);
+
+    py::class_<LevelDBValuesIterator, std::shared_ptr<LevelDBValuesIterator>>(m, "LevelDBValuesIterator")
+        .def("__iter__", [](py::object self) { return self; })
+        .def("__next__", &LevelDBValuesIterator::next);
+
+    py::class_<LevelDBItemsIterator, std::shared_ptr<LevelDBItemsIterator>>(m, "LevelDBItemsIterator")
+        .def("__iter__", [](py::object self) { return self; })
+        .def("__next__", &LevelDBItemsIterator::next);
+
+    py::class_<LevelDBItemsRangeIterator, std::shared_ptr<LevelDBItemsRangeIterator>>(m, "LevelDBItemsRangeIterator")
+        .def("__iter__", [](py::object self) { return self; })
+        .def("__next__", &LevelDBItemsRangeIterator::next);
 
     py::class_<Amulet::LevelDB> LevelDB(m, "LevelDB",
         "A LevelDB database");
@@ -342,6 +493,76 @@ void init_leveldb(py::module m)
         &Amulet::LevelDB::create_iterator,
         py::doc("Create a new leveldb Iterator."));
 
+    LevelDB.def(
+        "iterate",
+        [](
+            Amulet::LevelDB& self,
+            std::optional<std::string> start,
+            std::optional<std::string> end) -> std::variant<std::shared_ptr<LevelDBItemsIterator>,
+                                                std::shared_ptr<LevelDBItemsRangeIterator>> {
+            auto lock = self.lock_shared();
+            if (!self) {
+                throw LevelDBException("The LevelDB database has been closed.");
+            }
+            auto iterator_ptr = self.create_iterator();
+            auto& iterator = *iterator_ptr;
+            if (start) {
+                iterator->Seek(*start);
+            } else {
+                iterator->SeekToFirst();
+            }
+
+            if (end) {
+                return std::make_shared<LevelDBItemsRangeIterator>(std::move(iterator_ptr), *end);
+            } else {
+                return std::make_shared<LevelDBItemsIterator>(std::move(iterator_ptr));
+            }
+        },
+        py::arg("start") = py::none(),
+        py::arg("end") = py::none(),
+        py::doc(
+            "Iterate through all keys and data that exist between the given keys.\n"
+            "\n"
+            ":param start: The key to start at. Leave as None to start at the beginning.\n"
+            ":param end: The key to end at. Leave as None to finish at the end."));
+
+    LevelDB.def(
+        "__iter__",
+        [](Amulet::LevelDB& self) {
+            auto iterator_ptr = self.create_iterator();
+            auto& iterator = *iterator_ptr;
+            iterator->SeekToFirst();
+            return std::make_shared<LevelDBKeysIterator>(std::move(iterator_ptr));
+        });
+    LevelDB.def(
+        "keys",
+        [](Amulet::LevelDB& self) {
+            auto iterator_ptr = self.create_iterator();
+            auto& iterator = *iterator_ptr;
+            iterator->SeekToFirst();
+            return std::make_shared<LevelDBKeysIterator>(std::move(iterator_ptr));
+        },
+        py::doc("An iterable of all keys in the database."));
+
+    LevelDB.def(
+        "values",
+        [](Amulet::LevelDB& self) {
+            auto iterator_ptr = self.create_iterator();
+            auto& iterator = *iterator_ptr;
+            iterator->SeekToFirst();
+            return std::make_shared<LevelDBValuesIterator>(std::move(iterator_ptr));
+        },
+        py::doc("An iterable of all values in the database."));
+
+    LevelDB.def(
+        "items",
+        [](Amulet::LevelDB& self) {
+            auto iterator_ptr = self.create_iterator();
+            auto& iterator = *iterator_ptr;
+            iterator->SeekToFirst();
+            return std::make_shared<LevelDBItemsIterator>(std::move(iterator_ptr));
+        },
+        py::doc("An iterable of all items in the database."));
 }
 
 PYBIND11_MODULE(__init__, m) { init_leveldb(m); }

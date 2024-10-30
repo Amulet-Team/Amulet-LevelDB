@@ -1,6 +1,6 @@
 # Amulet LevelDB
 
-A Cython wrapper for Mojang's modified LevelDB library.
+A pybind11 wrapper for Mojang's modified LevelDB library.
 
 
 ## Install

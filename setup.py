@@ -21,9 +21,9 @@ if sys.platform == "win32":
     define_macros.append(("LEVELDB_PLATFORM_WINDOWS", None))
     define_macros.append(("DLLX", "__declspec(dllexport)"))
 
-    extra_sources.append("./leveldb-mcpe/port/port_win.cc")
-    extra_sources.append("./leveldb-mcpe/util/env_win.cc")
-    extra_sources.append("./leveldb-mcpe/util/win_logger.cc")
+    extra_sources.append("./submodules/leveldb-mcpe/port/port_win.cc")
+    extra_sources.append("./submodules/leveldb-mcpe/util/env_win.cc")
+    extra_sources.append("./submodules/leveldb-mcpe/util/win_logger.cc")
 
     if sys.maxsize > 2**32:  # 64 bit python
         extra_objects.append("bin/zlib/win64/zlibstatic.lib")
@@ -33,8 +33,8 @@ if sys.platform == "win32":
 elif sys.platform in ["linux", "darwin"]:
     define_macros.append(("LEVELDB_PLATFORM_POSIX", None))
     define_macros.append(("DLLX", ""))
-    extra_sources.append("./leveldb-mcpe/port/port_posix.cc")
-    extra_sources.append("./leveldb-mcpe/util/env_posix.cc")
+    extra_sources.append("./submodules/leveldb-mcpe/port/port_posix.cc")
+    extra_sources.append("./submodules/leveldb-mcpe/util/env_posix.cc")
     libraries.append("z")
 
     if sys.platform == "darwin":
@@ -61,51 +61,51 @@ setup(
             name="leveldb.__init__",
             sources=[
                 "./src/leveldb/__init__leveldb.py.cpp",
-                "./leveldb-mcpe/db/builder.cc",
-                "./leveldb-mcpe/db/c.cc",
-                "./leveldb-mcpe/db/db_impl.cc",
-                "./leveldb-mcpe/db/db_iter.cc",
-                "./leveldb-mcpe/db/dbformat.cc",
-                "./leveldb-mcpe/db/filename.cc",
-                "./leveldb-mcpe/db/log_reader.cc",
-                "./leveldb-mcpe/db/log_writer.cc",
-                "./leveldb-mcpe/db/memtable.cc",
-                "./leveldb-mcpe/db/repair.cc",
-                "./leveldb-mcpe/db/table_cache.cc",
-                "./leveldb-mcpe/db/version_edit.cc",
-                "./leveldb-mcpe/db/version_set.cc",
-                "./leveldb-mcpe/db/write_batch.cc",
-                "./leveldb-mcpe/table/block.cc",
-                "./leveldb-mcpe/table/block_builder.cc",
-                "./leveldb-mcpe/table/filter_block.cc",
-                "./leveldb-mcpe/table/format.cc",
-                "./leveldb-mcpe/table/iterator.cc",
-                "./leveldb-mcpe/table/merger.cc",
-                "./leveldb-mcpe/table/table.cc",
-                "./leveldb-mcpe/table/table_builder.cc",
-                "./leveldb-mcpe/table/two_level_iterator.cc",
-                "./leveldb-mcpe/util/arena.cc",
-                "./leveldb-mcpe/util/bloom.cc",
-                "./leveldb-mcpe/util/cache.cc",
-                "./leveldb-mcpe/util/coding.cc",
-                "./leveldb-mcpe/util/comparator.cc",
-                "./leveldb-mcpe/util/crc32c.cc",
-                "./leveldb-mcpe/util/env.cc",
-                "./leveldb-mcpe/util/filter_policy.cc",
-                "./leveldb-mcpe/util/hash.cc",
-                "./leveldb-mcpe/util/histogram.cc",
-                "./leveldb-mcpe/util/logging.cc",
-                "./leveldb-mcpe/util/options.cc",
-                "./leveldb-mcpe/util/status.cc",
-                "./leveldb-mcpe/db/zlib_compressor.cc",
-                "./leveldb-mcpe/db/zstd_compressor.cc",
-                "./leveldb-mcpe/port/port_posix_sse.cc",
+                "./submodules/leveldb-mcpe/db/builder.cc",
+                "./submodules/leveldb-mcpe/db/c.cc",
+                "./submodules/leveldb-mcpe/db/db_impl.cc",
+                "./submodules/leveldb-mcpe/db/db_iter.cc",
+                "./submodules/leveldb-mcpe/db/dbformat.cc",
+                "./submodules/leveldb-mcpe/db/filename.cc",
+                "./submodules/leveldb-mcpe/db/log_reader.cc",
+                "./submodules/leveldb-mcpe/db/log_writer.cc",
+                "./submodules/leveldb-mcpe/db/memtable.cc",
+                "./submodules/leveldb-mcpe/db/repair.cc",
+                "./submodules/leveldb-mcpe/db/table_cache.cc",
+                "./submodules/leveldb-mcpe/db/version_edit.cc",
+                "./submodules/leveldb-mcpe/db/version_set.cc",
+                "./submodules/leveldb-mcpe/db/write_batch.cc",
+                "./submodules/leveldb-mcpe/table/block.cc",
+                "./submodules/leveldb-mcpe/table/block_builder.cc",
+                "./submodules/leveldb-mcpe/table/filter_block.cc",
+                "./submodules/leveldb-mcpe/table/format.cc",
+                "./submodules/leveldb-mcpe/table/iterator.cc",
+                "./submodules/leveldb-mcpe/table/merger.cc",
+                "./submodules/leveldb-mcpe/table/table.cc",
+                "./submodules/leveldb-mcpe/table/table_builder.cc",
+                "./submodules/leveldb-mcpe/table/two_level_iterator.cc",
+                "./submodules/leveldb-mcpe/util/arena.cc",
+                "./submodules/leveldb-mcpe/util/bloom.cc",
+                "./submodules/leveldb-mcpe/util/cache.cc",
+                "./submodules/leveldb-mcpe/util/coding.cc",
+                "./submodules/leveldb-mcpe/util/comparator.cc",
+                "./submodules/leveldb-mcpe/util/crc32c.cc",
+                "./submodules/leveldb-mcpe/util/env.cc",
+                "./submodules/leveldb-mcpe/util/filter_policy.cc",
+                "./submodules/leveldb-mcpe/util/hash.cc",
+                "./submodules/leveldb-mcpe/util/histogram.cc",
+                "./submodules/leveldb-mcpe/util/logging.cc",
+                "./submodules/leveldb-mcpe/util/options.cc",
+                "./submodules/leveldb-mcpe/util/status.cc",
+                "./submodules/leveldb-mcpe/db/zlib_compressor.cc",
+                "./submodules/leveldb-mcpe/db/zstd_compressor.cc",
+                "./submodules/leveldb-mcpe/port/port_posix_sse.cc",
                 *extra_sources,
             ],
             include_dirs=[
-                "zlib",
-                "leveldb-mcpe",
-                "leveldb-mcpe/include",
+                "submodules/zlib",
+                "submodules/leveldb-mcpe",
+                "submodules/leveldb-mcpe/include",
                 pybind11_extensions.get_include(),
                 pybind11.get_include()
             ],

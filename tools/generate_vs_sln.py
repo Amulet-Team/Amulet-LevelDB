@@ -439,8 +439,8 @@ def get_files(
 
 
 def main() -> None:
-    zlib_path = os.path.join(RootDir, "zlib")
-    leveldb_mcpe_path = os.path.join(RootDir, "leveldb-mcpe")
+    zlib_path = os.path.join(RootDir, "submodules", "zlib")
+    leveldb_mcpe_path = os.path.join(RootDir, "submodules", "leveldb-mcpe")
     leveldb_lib = ProjectData(
         name="leveldb-mcpe",
         compile_mode=CompileMode.StaticLibrary,

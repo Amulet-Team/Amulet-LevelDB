@@ -11,11 +11,13 @@
 #include <leveldb/write_batch.h>
 #include <leveldb/zlib_compressor.h>
 
-#include "leveldb.hpp"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/typing.h>
+#include <pybind11_extensions/pybind11.hpp>
+
+#include "leveldb.hpp"
 
 namespace py = pybind11;
 
@@ -347,22 +349,6 @@ void init_leveldb(py::module m)
             "Get the value of the current entry in the database.\n"
             ":raises: runtime_error if iterator is not valid."));
 
-    py::class_<LevelDBKeysIterator, std::shared_ptr<LevelDBKeysIterator>>(m, "LevelDBKeysIterator")
-        .def("__iter__", [](py::object self) { return self; })
-        .def("__next__", &LevelDBKeysIterator::next);
-
-    py::class_<LevelDBValuesIterator, std::shared_ptr<LevelDBValuesIterator>>(m, "LevelDBValuesIterator")
-        .def("__iter__", [](py::object self) { return self; })
-        .def("__next__", &LevelDBValuesIterator::next);
-
-    py::class_<LevelDBItemsIterator, std::shared_ptr<LevelDBItemsIterator>>(m, "LevelDBItemsIterator")
-        .def("__iter__", [](py::object self) { return self; })
-        .def("__next__", &LevelDBItemsIterator::next);
-
-    py::class_<LevelDBItemsRangeIterator, std::shared_ptr<LevelDBItemsRangeIterator>>(m, "LevelDBItemsRangeIterator")
-        .def("__iter__", [](py::object self) { return self; })
-        .def("__next__", &LevelDBItemsRangeIterator::next);
-
     py::class_<Amulet::LevelDB> LevelDB(m, "LevelDB",
         "A LevelDB database");
     LevelDB.def(
@@ -505,8 +491,7 @@ void init_leveldb(py::module m)
         [](
             Amulet::LevelDB& self,
             std::optional<py::bytes> start,
-            std::optional<py::bytes> end) -> std::variant<std::shared_ptr<LevelDBItemsIterator>,
-                                                std::shared_ptr<LevelDBItemsRangeIterator>> {
+            std::optional<py::bytes> end) {
             auto lock = self.lock_shared();
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
@@ -520,9 +505,13 @@ void init_leveldb(py::module m)
             }
 
             if (end) {
-                return std::make_shared<LevelDBItemsRangeIterator>(std::move(iterator_ptr), end->cast<std::string>());
+                return pybind11_extensions::make_iterator(
+                    LevelDBItemsRangeIterator(std::move(iterator_ptr), end->cast<std::string>())
+                );
             } else {
-                return std::make_shared<LevelDBItemsIterator>(std::move(iterator_ptr));
+                return pybind11_extensions::make_iterator(
+                    LevelDBItemsIterator(std::move(iterator_ptr))
+                );
             }
         },
         py::arg("start") = py::none(),
@@ -539,7 +528,9 @@ void init_leveldb(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return std::make_shared<LevelDBKeysIterator>(std::move(iterator_ptr));
+            return pybind11_extensions::make_iterator(
+                LevelDBKeysIterator(std::move(iterator_ptr))
+            );
         });
     LevelDB.def(
         "keys",
@@ -547,7 +538,9 @@ void init_leveldb(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return std::make_shared<LevelDBKeysIterator>(std::move(iterator_ptr));
+            return pybind11_extensions::make_iterator(
+                LevelDBKeysIterator(std::move(iterator_ptr))
+            );
         },
         py::doc("An iterable of all keys in the database."));
 
@@ -557,7 +550,9 @@ void init_leveldb(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return std::make_shared<LevelDBValuesIterator>(std::move(iterator_ptr));
+            return pybind11_extensions::make_iterator(
+                LevelDBValuesIterator(std::move(iterator_ptr))
+            );
         },
         py::doc("An iterable of all values in the database."));
 
@@ -567,7 +562,9 @@ void init_leveldb(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return std::make_shared<LevelDBItemsIterator>(std::move(iterator_ptr));
+            return pybind11_extensions::make_iterator(
+                LevelDBItemsIterator(std::move(iterator_ptr))
+            );
         },
         py::doc("An iterable of all items in the database."));
 }

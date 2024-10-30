@@ -1,17 +1,8 @@
 from __future__ import annotations
 
-import typing
+import collections.abc
 
-__all__ = [
-    "LevelDB",
-    "LevelDBEncrypted",
-    "LevelDBException",
-    "LevelDBItemsIterator",
-    "LevelDBItemsRangeIterator",
-    "LevelDBIterator",
-    "LevelDBKeysIterator",
-    "LevelDBValuesIterator",
-]
+__all__ = ["LevelDB", "LevelDBEncrypted", "LevelDBException", "LevelDBIterator"]
 
 class LevelDB:
     """
@@ -32,7 +23,7 @@ class LevelDB:
         :raises: LevelDBException if create_if_missing is False and the db does not exist.
         """
 
-    def __iter__(self) -> LevelDBKeysIterator: ...
+    def __iter__(self) -> collections.abc.Iterator[bytes]: ...
     def __setitem__(self, key: bytes, value: bytes) -> None: ...
     def close(self, compact: bool = False) -> None:
         """
@@ -68,14 +59,14 @@ class LevelDB:
         :raises: LevelDBException on other error.
         """
 
-    def items(self) -> LevelDBItemsIterator:
+    def items(self) -> collections.abc.Iterator[tuple[bytes, bytes]]:
         """
         An iterable of all items in the database.
         """
 
     def iterate(
         self, start: bytes | None = None, end: bytes | None = None
-    ) -> LevelDBItemsIterator | LevelDBItemsRangeIterator:
+    ) -> collections.abc.Iterator[tuple[bytes, bytes]]:
         """
         Iterate through all keys and data that exist between the given keys.
 
@@ -83,7 +74,7 @@ class LevelDB:
         :param end: The key to end at. Leave as None to finish at the end.
         """
 
-    def keys(self) -> LevelDBKeysIterator:
+    def keys(self) -> collections.abc.Iterator[bytes]:
         """
         An iterable of all keys in the database.
         """
@@ -98,7 +89,7 @@ class LevelDB:
         Set a group of values in the database.
         """
 
-    def values(self) -> LevelDBValuesIterator:
+    def values(self) -> collections.abc.Iterator[bytes]:
         """
         An iterable of all values in the database.
         """
@@ -108,14 +99,6 @@ class LevelDBEncrypted(Exception):
 
 class LevelDBException(Exception):
     pass
-
-class LevelDBItemsIterator:
-    def __iter__(self) -> typing.Any: ...
-    def __next__(self) -> tuple[bytes, bytes]: ...
-
-class LevelDBItemsRangeIterator:
-    def __iter__(self) -> typing.Any: ...
-    def __next__(self) -> tuple[bytes, bytes]: ...
 
 class LevelDBIterator:
     def key(self) -> bytes:
@@ -161,13 +144,5 @@ class LevelDBIterator:
         Get the value of the current entry in the database.
         :raises: runtime_error if iterator is not valid.
         """
-
-class LevelDBKeysIterator:
-    def __iter__(self) -> typing.Any: ...
-    def __next__(self) -> bytes: ...
-
-class LevelDBValuesIterator:
-    def __iter__(self) -> typing.Any: ...
-    def __next__(self) -> bytes: ...
 
 __version__: str

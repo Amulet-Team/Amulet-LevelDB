@@ -7,12 +7,12 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 import pybind11
+import pybind11_extensions
 import sys
 import glob
 import sysconfig
 from collections.abc import Iterable
 from hashlib import md5
-import importlib.util
 
 RootDir = os.path.dirname(os.path.dirname(__file__))
 SrcDir = os.path.join(RootDir, "src")
@@ -229,7 +229,7 @@ class ProjectData:
     include_files: list[tuple[str, str, str]] = field(default_factory=list)
     include_dirs: list[str] = field(default_factory=list)
     library_dirs: list[str] = field(default_factory=list)
-    dependencies: list[ProjectData] = field(default_factory=list)
+    dependencies: list[ProjectData | str] = field(default_factory=list)
     py_package: str | None = None
     package_dir: str | None = None
 
@@ -297,17 +297,21 @@ def write(
                     library_path="".join(
                         [f"{path};" for path in project.library_dirs]
                         + [
-                            f"$(SolutionDir)$(Platform)\\$(Configuration)\\out\\{dep.name}\\;"
+                            f"$(SolutionDir)$(Platform)\\$(Configuration)\\out\\{dep.name if isinstance(dep, ProjectData) else dep}\\;"
                             for dep in project.dependencies
-                            if dep.compile_mode == CompileMode.StaticLibrary
-                            and dep.source_files
+                            if (
+                                dep.compile_mode == CompileMode.StaticLibrary and dep.source_files
+                                if isinstance(dep, ProjectData) else True
+                            )
                         ]
                     ),
                     libraries="".join(
-                        f"{dep.name}.lib;"
+                        f"{dep.name if isinstance(dep, ProjectData) else dep}.lib;"
                         for dep in project.dependencies
-                        if dep.compile_mode == CompileMode.StaticLibrary
-                        and dep.source_files
+                        if (
+                            dep.compile_mode == CompileMode.StaticLibrary and dep.source_files
+                            if isinstance(dep, ProjectData) else True
+                        )
                     ),
                     library_type=library_type.value,
                     project_guid=project_guid,
@@ -384,6 +388,7 @@ def write(
                 project_dependencies = "".join(
                     SolutionProjectDependency.format(dependency_guid=dep.project_guid())
                     for dep in project.dependencies
+                    if isinstance(dep, ProjectData)
                 )
                 project_dependencies = SolutionProjectDependencies.format(
                     project_dependencies=project_dependencies
@@ -511,15 +516,18 @@ def main() -> None:
         include_dirs=[
             PythonIncludeDir,
             pybind11.get_include(),
+            pybind11_extensions.get_include(),
             leveldb_mcpe_path,
             os.path.join(leveldb_mcpe_path, "include"),
             SrcDir,
         ],
         library_dirs=[
             PythonLibraryDir,
+            os.path.join(RootDir, "bin", "zlib", "win64")
         ],
         dependencies=[
             leveldb_lib,
+            "zlibstatic",
         ],
         py_package="leveldb",
         package_dir=os.path.dirname(leveldb_path),
@@ -539,3 +547,10 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# TODO:
+#  C/C++->Preprocessor->Preprocessor Definitions
+#  WIN32
+#  _WIN32_WINNT=0x0601
+#  LEVELDB_PLATFORM_WINDOWS
+#  DLLX=__declspec(dllexport)

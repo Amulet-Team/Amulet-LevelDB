@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 from uuid import uuid4
 import glob
 import os
+import weakref
 
 num_keys = [struct.pack("<Q", i) for i in range(10_000)]
 num_db = dict(zip(num_keys, num_keys))
@@ -296,6 +297,120 @@ class LevelDBTestCase(unittest.TestCase):
                 self.assertTrue(40_000 <= len(list(db.keys())) < 100_000)
             finally:
                 db.close()
+
+    def test_iterator_lifespan(self) -> None:
+        with TemporaryDirectory() as path:
+            db = LevelDB(path, True)
+            db_ref = weakref.ref(db)
+
+            # Set values
+            db[b"1"] = b"1"
+            db[b"2"] = b"2"
+            db[b"3"] = b"3"
+
+            # Get iterators
+            it = db.create_iterator()
+            it.seek_to_first()
+            it_k = db.keys()
+            it_v = db.values()
+            it_i = db.items()
+            it_it = db.iterate()
+
+            # Close database
+            db.close()
+
+            with self.assertRaises(RuntimeError):
+                it.key()
+            with self.assertRaises(RuntimeError):
+                it.value()
+            with self.assertRaises(RuntimeError):
+                next(it_k)
+            with self.assertRaises(RuntimeError):
+                next(it_v)
+            with self.assertRaises(RuntimeError):
+                next(it_i)
+            with self.assertRaises(RuntimeError):
+                next(it_it)
+
+            del db
+
+            with self.assertRaises(RuntimeError):
+                it.key()
+            with self.assertRaises(RuntimeError):
+                it.value()
+            with self.assertRaises(RuntimeError):
+                next(it_k)
+            with self.assertRaises(RuntimeError):
+                next(it_v)
+            with self.assertRaises(RuntimeError):
+                next(it_i)
+            with self.assertRaises(RuntimeError):
+                next(it_it)
+
+            self.assertIs(None, db_ref())
+
+    def test_iterator(self) -> None:
+        with TemporaryDirectory() as path:
+            db = LevelDB(path, True)
+
+            it1 = db.create_iterator()
+            it1.seek_to_first()
+            self.assertFalse(it1.valid())
+            with self.assertRaises(RuntimeError):
+                it1.key()
+            with self.assertRaises(RuntimeError):
+                it1.value()
+
+            # Set values
+            db[b"1"] = b"2"
+            db[b"3"] = b"4"
+            db[b"5"] = b"6"
+
+            # The first iterator should remain invalid
+            with self.assertRaises(RuntimeError):
+                it1.key()
+            with self.assertRaises(RuntimeError):
+                it1.value()
+
+            it1.seek_to_first()
+            self.assertFalse(it1.valid())
+            with self.assertRaises(RuntimeError):
+                it1.key()
+            with self.assertRaises(RuntimeError):
+                it1.value()
+
+            it2 = db.create_iterator()
+            it2.seek_to_first()
+            self.assertTrue(it2.valid())
+            self.assertEqual(b"1", it2.key())
+            self.assertEqual(b"2", it2.value())
+            it2.next()
+            self.assertTrue(it2.valid())
+            self.assertEqual(b"3", it2.key())
+            self.assertEqual(b"4", it2.value())
+            it2.next()
+            self.assertTrue(it2.valid())
+            self.assertEqual(b"5", it2.key())
+            self.assertEqual(b"6", it2.value())
+            it2.prev()
+            self.assertTrue(it2.valid())
+            self.assertEqual(b"3", it2.key())
+            self.assertEqual(b"4", it2.value())
+            it2.next()
+            it2.next()
+            self.assertFalse(it2.valid())
+
+            it2.seek_to_last()
+            self.assertTrue(it2.valid())
+            self.assertEqual(b"5", it2.key())
+            self.assertEqual(b"6", it2.value())
+
+            it2.seek(b"2")
+            self.assertTrue(it2.valid())
+            self.assertEqual(b"3", it2.key())
+            self.assertEqual(b"4", it2.value())
+
+            db.close()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,9 @@
 import sys
 from typing import Union
 import sysconfig
+
+import pybind11
+import pybind11_extensions
 from setuptools import setup, Extension
 from distutils import ccompiler
 import versioneer
@@ -103,6 +106,8 @@ setup(
                 "zlib",
                 "leveldb-mcpe",
                 "leveldb-mcpe/include",
+                pybind11_extensions.get_include(),
+                pybind11.get_include()
             ],
             extra_compile_args=extra_compile_args,
             extra_link_args=extra_link_args,

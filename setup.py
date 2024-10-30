@@ -39,8 +39,8 @@ elif sys.platform in ["linux", "darwin"]:
 
     if sys.platform == "darwin":
         define_macros.append(("OS_MACOSX", None))
-        # shared_mutex needs MacOS 10.12+
-        extra_compile_args.append("-mmacosx-version-min=10.12")
+        # shared_mutex needs MacOS 10.12+, filesystem needs 10.15
+        extra_compile_args.append("-mmacosx-version-min=10.15")
         extra_compile_args.append("-Werror=partial-availability")
         extra_link_args.append("-Wl,-no_weak_imports")
 else:

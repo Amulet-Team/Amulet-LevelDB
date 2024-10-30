@@ -2,7 +2,8 @@
 requires = [
     "setuptools >= 42",
     "wheel",
-    "cython >= 3.0.0a11",
-    "versioneer",
+    "pybind11 ~= 2.12",
+    "Amulet-pybind11-extensions @ git+https://github.com/Amulet-Team/Amulet-pybind11-extensions.git@6d272873c277f1aeda94740d1897ee3464803bce",
+    "versioneer"
 ]
 build-backend = "setuptools.build_meta"

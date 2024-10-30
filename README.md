@@ -1,6 +1,6 @@
 # Amulet LevelDB
 
-A Cython wrapper for Mojang's modified LevelDB library.
+A pybind11 wrapper for Mojang's modified LevelDB library.
 
 
 ## Install
@@ -17,4 +17,4 @@ print(db.get(b"key"))
 # b"value"
 ```
 
-See the [source code](src/leveldb/_leveldb.pyx) for full documentation.
+See the [source code](src/leveldb/__init__leveldb.py.cpp) for full documentation.

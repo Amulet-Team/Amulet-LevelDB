@@ -93,6 +93,7 @@ VCXProj = r"""<?xml version="1.0" encoding="utf-8"?>
     <ClCompile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>{include_dirs}%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>{preprocessor_definitions}%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);{libraries}</AdditionalDependencies>
@@ -102,6 +103,7 @@ VCXProj = r"""<?xml version="1.0" encoding="utf-8"?>
     <ClCompile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>{include_dirs}%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>{preprocessor_definitions}%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);{libraries}</AdditionalDependencies>
@@ -228,6 +230,7 @@ class ProjectData:
     source_files: list[tuple[str, str, str]] = field(default_factory=list)
     include_files: list[tuple[str, str, str]] = field(default_factory=list)
     include_dirs: list[str] = field(default_factory=list)
+    preprocessor_definitions: list[str] = field(default_factory=list)
     library_dirs: list[str] = field(default_factory=list)
     dependencies: list[ProjectData | str] = field(default_factory=list)
     py_package: str | None = None
@@ -294,6 +297,7 @@ def write(
                     source_files=vcxproj_sources,
                     include_files=vcxproj_includes,
                     include_dirs="".join(f"{path};" for path in project.include_dirs),
+                    preprocessor_definitions="".join(f"{ppd};" for ppd in project.preprocessor_definitions),
                     library_path="".join(
                         [f"{path};" for path in project.library_dirs]
                         + [
@@ -454,6 +458,12 @@ def main() -> None:
             leveldb_mcpe_path,
             os.path.join(leveldb_mcpe_path, "include"),
         ],
+        preprocessor_definitions=[
+            "WIN32",
+            "_WIN32_WINNT=0x0601",
+            "LEVELDB_PLATFORM_WINDOWS",
+            "DLLX=__declspec(dllexport)",
+        ],
         include_files=get_files(
             root_dir=leveldb_mcpe_path, root_dir_suffix="include", ext="h"
         ),
@@ -521,6 +531,12 @@ def main() -> None:
             os.path.join(leveldb_mcpe_path, "include"),
             SrcDir,
         ],
+        preprocessor_definitions=[
+            "WIN32",
+            "_WIN32_WINNT=0x0601",
+            "LEVELDB_PLATFORM_WINDOWS",
+            "DLLX=__declspec(dllexport)",
+        ],
         library_dirs=[
             PythonLibraryDir,
             os.path.join(RootDir, "bin", "zlib", "win64")
@@ -547,10 +563,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-# TODO:
-#  C/C++->Preprocessor->Preprocessor Definitions
-#  WIN32
-#  _WIN32_WINNT=0x0601
-#  LEVELDB_PLATFORM_WINDOWS
-#  DLLX=__declspec(dllexport)

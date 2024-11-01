@@ -84,7 +84,7 @@ class LevelDB:
         Set a value in the database.
         """
 
-    def put_batch(self, batch: dict[bytes, bytes | None]) -> None:
+    def put_batch(self, batch: collections.abc.Mapping[bytes, bytes]) -> None:
         """
         Set a group of values in the database.
         """

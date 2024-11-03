@@ -423,11 +423,13 @@ void init_leveldb(py::module m)
         py::doc(
             "Close the leveldb database.\n"
             "\n"
-            ":param compact: If True will compact the database making it take less memory."));
+            ":param compact: If True will compact the database making it take less memory."),
+        py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(
         "compact",
         [](Amulet::LevelDB& self) {
+            py::gil_scoped_release gil;
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
@@ -436,6 +438,7 @@ void init_leveldb(py::module m)
         py::doc("Remove deleted entries from the database to reduce its size."));
 
     auto put = [](Amulet::LevelDB& self, leveldb::Slice key, leveldb::Slice value) {
+        py::gil_scoped_release gil;
         if (!self) {
             throw std::runtime_error("The LevelDB database has been closed.");
         }
@@ -450,6 +453,7 @@ void init_leveldb(py::module m)
     LevelDB.def(
         "put_batch",
         [](Amulet::LevelDB& self, leveldb::WriteBatch batch) {
+            py::gil_scoped_release gil;
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
@@ -464,6 +468,7 @@ void init_leveldb(py::module m)
     LevelDB.def(
         "__contains__",
         [](Amulet::LevelDB& self, leveldb::Slice key) {
+            py::gil_scoped_release gil;
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
@@ -476,6 +481,7 @@ void init_leveldb(py::module m)
         std::string value;
         leveldb::Status status;
         {
+            py::gil_scoped_release gil;
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
@@ -504,6 +510,7 @@ void init_leveldb(py::module m)
     LevelDB.def("__getitem__", get, py::arg("key"));
 
     auto del = [](Amulet::LevelDB& self, leveldb::Slice key) {
+        py::gil_scoped_release gil;
         if (!self) {
             throw std::runtime_error("The LevelDB database has been closed.");
         }

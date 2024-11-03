@@ -419,7 +419,11 @@ void init_leveldb(py::module m)
     LevelDB.def(
         "close",
         &Amulet::LevelDB::close,
-        py::doc("Close the leveldb database."),
+        py::doc(
+            "Close the leveldb database.\n"
+            "Only the owner of the database may close it.\n"
+            "If needed, an external lock must be used to ensure that no other threads are accessing the database."
+        ),
         py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(

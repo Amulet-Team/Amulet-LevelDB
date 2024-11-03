@@ -6,6 +6,8 @@ from uuid import uuid4
 import glob
 import os
 import weakref
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 num_keys = [struct.pack("<Q", i) for i in range(10_000)]
 num_db = dict(zip(num_keys, num_keys))
@@ -412,6 +414,115 @@ class LevelDBTestCase(unittest.TestCase):
 
             db.close()
 
+    def test_thread_write(self) -> None:
+        count = 10_000
+        data = [
+            [
+                struct.pack(">i", i + j)
+                for j in range(count)
+            ]
+            for i in range(0, count * 10, count)
+        ]
+        m = {k: k for k in sum(data, [])}
+
+        with TemporaryDirectory() as path:
+            t1 = -time.time()
+            db = LevelDB(path, True)
+            for l in data:
+                for v in l:
+                    db.put(v, v)
+            db.close()
+            t1 += time.time()
+
+            db = LevelDB(path)
+            m1 = dict(db)
+            db.close()
+            self.assertEqual(m, m1)
+
+        with TemporaryDirectory() as path:
+            t2 = -time.time()
+            db = LevelDB(path, True)
+
+            def add(values) -> None:
+                for v in values:
+                    db.put(v, v)
+
+            with ThreadPoolExecutor() as executor:
+                executor.map(add, data)
+
+            db.close()
+            t2 += time.time()
+
+            db = LevelDB(path)
+            m2 = dict(db)
+            db.close()
+            self.assertEqual(m, m2)
+
+        self.assertLess(t2, t1)
+
+    def test_thread_read(self) -> None:
+        count = 10_000
+        data = [
+            [
+                struct.pack(">i", i + j)
+                for j in range(count)
+            ]
+            for i in range(0, count * 10, count)
+        ]
+        m = {k: k for k in sum(data, [])}
+
+        with TemporaryDirectory() as path:
+            db = LevelDB(path, True)
+
+            def add(values) -> None:
+                for v in values:
+                    db.put(v, v)
+
+            with ThreadPoolExecutor() as executor:
+                executor.map(add, data)
+
+            db.close()
+
+            # Validate the database
+            db = LevelDB(path)
+            m2 = dict(db)
+            db.close()
+            self.assertEqual(m, m2)
+
+            # # Read serial
+            db = LevelDB(path)
+            m1 = {}
+            t1 = -time.time()
+            it = db.create_iterator()
+            it.seek_to_first()
+            while it.valid():
+                m1[it.key()] = it.value()
+                it.next()
+            t1 += time.time()
+            db.close()
+            self.assertEqual(m, m1)
+
+            # Read parallel
+            db = LevelDB(path)
+            m2 = {}
+            t2 = -time.time()
+
+            def read(values) -> None:
+                it = db.create_iterator()
+                it.seek(values[0])
+                for _ in range(count):
+                    m2[it.key()] = it.value()
+                    it.next()
+
+            with ThreadPoolExecutor() as executor:
+                executor.map(read, data)
+
+            t2 += time.time()
+            db.close()
+            self.assertEqual(m, m2)
+
+        self.assertLess(t2, t1)
+        print(t1, t2)
 
 if __name__ == "__main__":
     unittest.main()

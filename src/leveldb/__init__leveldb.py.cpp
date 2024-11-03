@@ -11,7 +11,6 @@
 #include <leveldb/write_batch.h>
 #include <leveldb/zlib_compressor.h>
 
-
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/typing.h>
@@ -20,6 +19,71 @@
 #include "leveldb.hpp"
 
 namespace py = pybind11;
+
+namespace PYBIND11_NAMESPACE {
+namespace detail {
+    template <>
+    struct type_caster<leveldb::Slice> {
+    public:
+        PYBIND11_TYPE_CASTER(leveldb::Slice, const_name("bytes"));
+
+        bool load(handle src, bool)
+        {
+            PyObject* source = src.ptr();
+            if (!PyBytes_Check(source)) {
+                return false;
+            }
+            Py_ssize_t size = PyBytes_Size(src.ptr());
+            const char* buffer = PyBytes_AsString(src.ptr());
+            if (!buffer) {
+                return false;
+            }
+            value = leveldb::Slice(buffer, size);
+            return true;
+        }
+
+        // This causes a crash that I don't understand
+        // static handle cast(const leveldb::Slice& src, return_value_policy /* policy */, handle /* parent */)
+        //{
+        //    return py::bytes(src.data(), src.size());
+        //}
+    };
+
+    template <>
+    struct type_caster<leveldb::WriteBatch> {
+    public:
+        PYBIND11_TYPE_CASTER(leveldb::WriteBatch, const_name("collections.abc.Mapping[bytes, bytes]"));
+
+        bool load(handle src, bool)
+        {
+            auto getitem = src.attr("__getitem__");
+            for (auto& key : src) {
+                if (!PyBytes_Check(key.ptr())) {
+                    return false;
+                }
+                Py_ssize_t key_size = PyBytes_Size(key.ptr());
+                const char* key_buffer = PyBytes_AsString(key.ptr());
+                if (!key_buffer) {
+                    return false;
+                }
+
+                auto val = getitem(key);
+                if (val.is_none()) {
+                    value.Delete(leveldb::Slice(key_buffer, key_size));
+                } else {
+                    Py_ssize_t val_size = PyBytes_Size(val.ptr());
+                    const char* val_buffer = PyBytes_AsString(val.ptr());
+                    if (!val_buffer) {
+                        return false;
+                    }
+                    value.Put(leveldb::Slice(key_buffer, key_size), leveldb::Slice(val_buffer, val_size));
+                }
+            }
+            return true;
+        }
+    };
+}
+} // namespace PYBIND11_NAMESPACE::detail
 
 namespace {
 
@@ -116,7 +180,6 @@ public:
 
     py::bytes next()
     {
-        auto lock = iterator_ptr->lock_shared();
         auto& iterator = *iterator_ptr;
         if (!iterator) {
             throw std::runtime_error("LevelDBIterator has been deleted.");
@@ -146,7 +209,6 @@ public:
 
     py::bytes next()
     {
-        auto lock = iterator_ptr->lock_shared();
         auto& iterator = *iterator_ptr;
         if (!iterator) {
             throw std::runtime_error("LevelDBIterator has been deleted.");
@@ -176,7 +238,6 @@ public:
 
     py::typing::Tuple<py::bytes, py::bytes> next()
     {
-        auto lock = iterator_ptr->lock_shared();
         auto& iterator = *iterator_ptr;
         if (!iterator) {
             throw std::runtime_error("LevelDBIterator has been deleted.");
@@ -211,7 +272,6 @@ public:
 
     py::typing::Tuple<py::bytes, py::bytes> next()
     {
-        auto lock = iterator_ptr->lock_shared();
         auto& iterator = *iterator_ptr;
         if (!iterator) {
             throw std::runtime_error("LevelDBIterator has been deleted.");
@@ -257,7 +317,6 @@ void init_leveldb(py::module m)
     LevelDBIterator.def(
         "valid",
         [](Amulet::LevelDBIterator& self) {
-            auto lock = self.lock_shared();
             return self && self->Valid();
         },
         py::doc(
@@ -266,7 +325,6 @@ void init_leveldb(py::module m)
     LevelDBIterator.def(
         "seek_to_first",
         [](Amulet::LevelDBIterator& self) {
-            auto lock = self.lock_shared();
             if (!self) {
                 throw std::runtime_error("LevelDBIterator has been deleted.");
             }
@@ -276,7 +334,6 @@ void init_leveldb(py::module m)
     LevelDBIterator.def(
         "seek_to_last",
         [](Amulet::LevelDBIterator& self) {
-            auto lock = self.lock_shared();
             if (!self) {
                 throw std::runtime_error("LevelDBIterator has been deleted.");
             }
@@ -285,12 +342,11 @@ void init_leveldb(py::module m)
         py::doc("Seek to the last entry in the database."));
     LevelDBIterator.def(
         "seek",
-        [](Amulet::LevelDBIterator& self, py::bytes target) {
-            auto lock = self.lock_shared();
+        [](Amulet::LevelDBIterator& self, leveldb::Slice target) {
             if (!self) {
                 throw std::runtime_error("LevelDBIterator has been deleted.");
             }
-            self->Seek(target.cast<std::string>());
+            self->Seek(target);
         },
         py::arg("target"),
         py::doc(
@@ -299,7 +355,6 @@ void init_leveldb(py::module m)
     LevelDBIterator.def(
         "next",
         [](Amulet::LevelDBIterator& self) {
-            auto lock = self.lock_shared();
             if (!self) {
                 throw std::runtime_error("LevelDBIterator has been deleted.");
             }
@@ -310,7 +365,6 @@ void init_leveldb(py::module m)
     LevelDBIterator.def(
         "prev",
         [](Amulet::LevelDBIterator& self) {
-            auto lock = self.lock_shared();
             if (!self) {
                 throw std::runtime_error("LevelDBIterator has been deleted.");
             }
@@ -321,14 +375,13 @@ void init_leveldb(py::module m)
     LevelDBIterator.def(
         "key",
         [](Amulet::LevelDBIterator& self) {
-            auto lock = self.lock_shared();
             if (!self) {
                 throw std::runtime_error("LevelDBIterator has been deleted.");
             }
             if (!self->Valid()) {
                 throw std::runtime_error("LevelDBIterator does not point to a valid value.");
             }
-            return py::bytes(self->key().ToString());
+            return py::bytes(self->key().data(), self->key().size());
         },
         py::doc(
             "Get the key of the current entry in the database.\n"
@@ -336,14 +389,13 @@ void init_leveldb(py::module m)
     LevelDBIterator.def(
         "value",
         [](Amulet::LevelDBIterator& self) {
-            auto lock = self.lock_shared();
             if (!self) {
                 throw std::runtime_error("LevelDBIterator has been deleted.");
             }
             if (!self->Valid()) {
                 throw std::runtime_error("LevelDBIterator does not point to a valid value.");
             }
-            return py::bytes(self->value().ToString());
+            return py::bytes(self->value().data(), self->value().size());
         },
         py::doc(
             "Get the value of the current entry in the database.\n"
@@ -367,16 +419,17 @@ void init_leveldb(py::module m)
     LevelDB.def(
         "close",
         &Amulet::LevelDB::close,
-        py::arg("compact") = false,
         py::doc(
             "Close the leveldb database.\n"
-            "\n"
-            ":param compact: If True will compact the database making it take less memory."));
+            "Only the owner of the database may close it.\n"
+            "If needed, an external lock must be used to ensure that no other threads are accessing the database."
+        ),
+        py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(
         "compact",
         [](Amulet::LevelDB& self) {
-            auto lock = self.lock_shared();
+            py::gil_scoped_release gil;
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
@@ -384,12 +437,12 @@ void init_leveldb(py::module m)
         },
         py::doc("Remove deleted entries from the database to reduce its size."));
 
-    auto put = [](Amulet::LevelDB& self, py::bytes key, py::bytes value) {
-        auto lock = self.lock_shared();
+    auto put = [](Amulet::LevelDB& self, leveldb::Slice key, leveldb::Slice value) {
+        py::gil_scoped_release gil;
         if (!self) {
             throw std::runtime_error("The LevelDB database has been closed.");
         }
-        auto status = self->Put(self.get_write_options(), key.cast<std::string>(), value.cast<std::string>());
+        auto status = self->Put(self.get_write_options(), key, value);
         if (!status.ok()) {
             throw LevelDBException(status.ToString());
         }
@@ -399,18 +452,10 @@ void init_leveldb(py::module m)
 
     LevelDB.def(
         "put_batch",
-        [](Amulet::LevelDB& self, py::typing::Dict<py::bytes, std::optional<py::bytes>> py_data) {
-            auto lock = self.lock_shared();
+        [](Amulet::LevelDB& self, leveldb::WriteBatch batch) {
+            py::gil_scoped_release gil;
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
-            }
-            leveldb::WriteBatch batch;
-            for (auto& item : py_data) {
-                if (item.second.is_none()) {
-                    batch.Delete(item.first.cast<std::string>());
-                } else {
-                    batch.Put(item.first.cast<std::string>(), item.second.cast<std::string>());
-                }
             }
             leveldb::Status status = self->Write(self.get_write_options(), &batch);
             if (!status.ok()) {
@@ -422,28 +467,31 @@ void init_leveldb(py::module m)
 
     LevelDB.def(
         "__contains__",
-        [](Amulet::LevelDB& self, py::bytes key) {
-            auto lock = self.lock_shared();
+        [](Amulet::LevelDB& self, leveldb::Slice key) {
+            py::gil_scoped_release gil;
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
             std::string value;
-            return self->Get(self.get_read_options(), key.cast<std::string>(), &value).ok();
+            return self->Get(self.get_read_options(), key, &value).ok();
         },
         py::arg("key"));
 
-    auto get = [](Amulet::LevelDB& self, py::bytes key) {
-        auto lock = self.lock_shared();
-        if (!self) {
-            throw std::runtime_error("The LevelDB database has been closed.");
-        }
+    auto get = [](Amulet::LevelDB& self, leveldb::Slice key) {
         std::string value;
-        auto status = self->Get(self.get_read_options(), key.cast<std::string>(), &value);
+        leveldb::Status status;
+        {
+            py::gil_scoped_release gil;
+            if (!self) {
+                throw std::runtime_error("The LevelDB database has been closed.");
+            }
+            status = self->Get(self.get_read_options(), key, &value);
+        }
         switch (status.code()) {
         case leveldb::Status::kOk:
             return py::bytes(value);
         case leveldb::Status::kNotFound:
-            throw py::key_error(key);
+            throw py::key_error(key.ToString());
         default:
             throw LevelDBException(status.ToString());
         }
@@ -461,12 +509,12 @@ void init_leveldb(py::module m)
             ":raises: LevelDBException on other error."));
     LevelDB.def("__getitem__", get, py::arg("key"));
 
-    auto del = [](Amulet::LevelDB& self, py::bytes key) {
-        auto lock = self.lock_shared();
+    auto del = [](Amulet::LevelDB& self, leveldb::Slice key) {
+        py::gil_scoped_release gil;
         if (!self) {
             throw std::runtime_error("The LevelDB database has been closed.");
         }
-        auto status = self->Delete(self.get_write_options(), key.cast<std::string>());
+        auto status = self->Delete(self.get_write_options(), key);
         if (!status.ok()) {
             throw LevelDBException(status.ToString());
         }
@@ -492,7 +540,6 @@ void init_leveldb(py::module m)
             Amulet::LevelDB& self,
             std::optional<py::bytes> start,
             std::optional<py::bytes> end) {
-            auto lock = self.lock_shared();
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
@@ -506,12 +553,10 @@ void init_leveldb(py::module m)
 
             if (end) {
                 return pybind11_extensions::make_iterator(
-                    LevelDBItemsRangeIterator(std::move(iterator_ptr), end->cast<std::string>())
-                );
+                    LevelDBItemsRangeIterator(std::move(iterator_ptr), end->cast<std::string>()));
             } else {
                 return pybind11_extensions::make_iterator(
-                    LevelDBItemsIterator(std::move(iterator_ptr))
-                );
+                    LevelDBItemsIterator(std::move(iterator_ptr)));
             }
         },
         py::arg("start") = py::none(),
@@ -529,8 +574,7 @@ void init_leveldb(py::module m)
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
             return pybind11_extensions::make_iterator(
-                LevelDBKeysIterator(std::move(iterator_ptr))
-            );
+                LevelDBKeysIterator(std::move(iterator_ptr)));
         });
     LevelDB.def(
         "keys",
@@ -539,8 +583,7 @@ void init_leveldb(py::module m)
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
             return pybind11_extensions::make_iterator(
-                LevelDBKeysIterator(std::move(iterator_ptr))
-            );
+                LevelDBKeysIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all keys in the database."));
 
@@ -551,8 +594,7 @@ void init_leveldb(py::module m)
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
             return pybind11_extensions::make_iterator(
-                LevelDBValuesIterator(std::move(iterator_ptr))
-            );
+                LevelDBValuesIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all values in the database."));
 
@@ -563,8 +605,7 @@ void init_leveldb(py::module m)
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
             return pybind11_extensions::make_iterator(
-                LevelDBItemsIterator(std::move(iterator_ptr))
-            );
+                LevelDBItemsIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all items in the database."));
 }

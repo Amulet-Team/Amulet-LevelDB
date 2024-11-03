@@ -2,7 +2,6 @@
 #include <functional>
 #include <memory>
 #include <set>
-#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -16,7 +15,6 @@ namespace Amulet {
 
 class LevelDBIterator {
 private:
-    std::shared_mutex mutex;
     std::unique_ptr<leveldb::Iterator> iterator;
     std::vector<std::function<void()>> on_destroy;
 
@@ -27,7 +25,6 @@ private:
     }
     void destroy()
     {
-        std::unique_lock<std::shared_mutex> lock(mutex);
         if (iterator) {
             // Notify all callbacks that the iterator is about to be destroyed.
             for (const auto& f : on_destroy) {
@@ -50,31 +47,14 @@ public:
         destroy();
     }
 
-    // Lock the iterator in unique mode.
-    // The returned lock must be destroyed when it is no longer needed.
-    std::unique_lock<std::shared_mutex> lock_unique()
-    {
-        return std::unique_lock<std::shared_mutex>(mutex);
-    }
-
-    // Lock the iterator in shared mode.
-    // The returned lock must be destroyed when it is no longer needed.
-    std::shared_lock<std::shared_mutex> lock_shared()
-    {
-        return std::shared_lock<std::shared_mutex>(mutex);
-    }
-
     // Check if the iterator is still alive.
     // If false other calls will error.
-    // The mutex must be locked to stop the iterator being destroyed while it is being used.
     operator bool()
     {
         return static_cast<bool>(iterator);
     }
 
     // Get the raw iterator.
-    // The caller must first lock the mutex to stop the iterator being destroyed
-    // then check if the iterator is still alive before calling this.
     leveldb::Iterator* operator->()
     {
         return iterator.get();
@@ -92,9 +72,6 @@ public:
 
 class LevelDB {
 private:
-    // Mutex to ensure nothing is processing when we close the database.
-    std::shared_mutex mutex;
-
     // Leveldb objects
     std::unique_ptr<leveldb::DB> db;
 
@@ -124,7 +101,6 @@ public:
 
     void close(bool compact = false)
     {
-        std::unique_lock<std::shared_mutex> lock(mutex);
         if (db) {
             if (compact) {
                 db->CompactRange(nullptr, nullptr);
@@ -139,20 +115,6 @@ public:
     ~LevelDB()
     {
         close();
-    }
-
-    // Lock the database in unique mode.
-    // The returned lock must be destroyed when it is no longer needed.
-    std::unique_lock<std::shared_mutex> lock_unique()
-    {
-        return std::unique_lock<std::shared_mutex>(mutex);
-    }
-
-    // Lock the database in shared mode.
-    // The returned lock must be destroyed when it is no longer needed.
-    std::shared_lock<std::shared_mutex> lock_shared()
-    {
-        return std::shared_lock<std::shared_mutex>(mutex);
     }
 
     operator bool()
@@ -170,7 +132,6 @@ public:
     // You may use raw iterators but you must ensure the database outlives the iterator.
     std::unique_ptr<LevelDBIterator> create_iterator()
     {
-        std::shared_lock<std::shared_mutex> lock(mutex);
         if (!db) {
             throw std::runtime_error("The LevelDB database has been closed.");
         }

@@ -468,14 +468,6 @@ void init_leveldb(py::module m)
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
-            leveldb::WriteBatch batch;
-            for (auto& item : py_data) {
-                if (item.second.is_none()) {
-                    batch.Delete(item.first.cast<std::string>());
-                } else {
-                    batch.Put(item.first.cast<std::string>(), item.second.cast<std::string>());
-                }
-            }
             leveldb::Status status = self->Write(self.get_write_options(), &batch);
             if (!status.ok()) {
                 throw LevelDBException(status.ToString());

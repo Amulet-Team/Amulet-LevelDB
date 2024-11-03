@@ -43,7 +43,7 @@ namespace detail {
         }
 
         // This causes a crash that I don't understand
-        //static handle cast(const leveldb::Slice& src, return_value_policy /* policy */, handle /* parent */)
+        // static handle cast(const leveldb::Slice& src, return_value_policy /* policy */, handle /* parent */)
         //{
         //    return py::bytes(src.data(), src.size());
         //}
@@ -565,12 +565,10 @@ void init_leveldb(py::module m)
 
             if (end) {
                 return pybind11_extensions::make_iterator(
-                    LevelDBItemsRangeIterator(std::move(iterator_ptr), end->cast<std::string>())
-                );
+                    LevelDBItemsRangeIterator(std::move(iterator_ptr), end->cast<std::string>()));
             } else {
                 return pybind11_extensions::make_iterator(
-                    LevelDBItemsIterator(std::move(iterator_ptr))
-                );
+                    LevelDBItemsIterator(std::move(iterator_ptr)));
             }
         },
         py::arg("start") = py::none(),
@@ -588,8 +586,7 @@ void init_leveldb(py::module m)
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
             return pybind11_extensions::make_iterator(
-                LevelDBKeysIterator(std::move(iterator_ptr))
-            );
+                LevelDBKeysIterator(std::move(iterator_ptr)));
         });
     LevelDB.def(
         "keys",
@@ -598,8 +595,7 @@ void init_leveldb(py::module m)
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
             return pybind11_extensions::make_iterator(
-                LevelDBKeysIterator(std::move(iterator_ptr))
-            );
+                LevelDBKeysIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all keys in the database."));
 
@@ -610,8 +606,7 @@ void init_leveldb(py::module m)
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
             return pybind11_extensions::make_iterator(
-                LevelDBValuesIterator(std::move(iterator_ptr))
-            );
+                LevelDBValuesIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all values in the database."));
 
@@ -622,8 +617,7 @@ void init_leveldb(py::module m)
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
             return pybind11_extensions::make_iterator(
-                LevelDBItemsIterator(std::move(iterator_ptr))
-            );
+                LevelDBItemsIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all items in the database."));
 }

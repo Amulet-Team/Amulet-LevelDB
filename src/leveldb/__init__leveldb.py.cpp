@@ -419,11 +419,7 @@ void init_leveldb(py::module m)
     LevelDB.def(
         "close",
         &Amulet::LevelDB::close,
-        py::arg("compact") = false,
-        py::doc(
-            "Close the leveldb database.\n"
-            "\n"
-            ":param compact: If True will compact the database making it take less memory."),
+        py::doc("Close the leveldb database."),
         py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(

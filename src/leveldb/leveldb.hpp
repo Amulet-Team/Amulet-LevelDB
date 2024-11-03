@@ -99,12 +99,9 @@ public:
     {
     }
 
-    void close(bool compact = false)
+    void close()
     {
         if (db) {
-            if (compact) {
-                db->CompactRange(nullptr, nullptr);
-            }
             while (!iterators.empty()) {
                 (*iterators.begin())->destroy();
             }

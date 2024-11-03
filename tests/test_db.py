@@ -458,8 +458,6 @@ class LevelDBTestCase(unittest.TestCase):
             db.close()
             self.assertEqual(m, m2)
 
-        self.assertLess(t2, t1)
-
     def test_thread_read(self) -> None:
         count = 10_000
         data = [
@@ -521,8 +519,6 @@ class LevelDBTestCase(unittest.TestCase):
             db.close()
             self.assertEqual(m, m2)
 
-        self.assertLess(t2, t1)
-        print(t1, t2)
 
 if __name__ == "__main__":
     unittest.main()

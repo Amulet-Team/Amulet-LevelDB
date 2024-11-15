@@ -4,3 +4,6 @@
 [submodule "leveldb-mcpe"]
 	path = submodules/leveldb-mcpe
 	url = https://github.com/Amulet-Team/leveldb-mcpe
+[submodule "tools/shared"]
+	path = tools/shared
+	url = https://github.com/Amulet-Team/cpp-tools

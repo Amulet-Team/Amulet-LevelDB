@@ -14,6 +14,8 @@ if (WIN32)
 	add_definitions(-D_WIN32_WINNT=0x0601)
 elseif(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
+else()
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
 # Add pybind11

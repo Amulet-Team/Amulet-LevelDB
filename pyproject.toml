@@ -2,8 +2,72 @@
 requires = [
     "setuptools >= 42",
     "wheel",
-    "pybind11 ~= 2.12",
+    "pybind11[global] == 2.13.6",
     "Amulet-pybind11-extensions @ git+https://github.com/Amulet-Team/Amulet-pybind11-extensions.git@6d272873c277f1aeda94740d1897ee3464803bce",
     "versioneer"
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "amulet-leveldb"
+authors = [
+    {name = "James Clare"},
+]
+description = "A pybind11 wrapper for Mojang's custom LevelDB."
+dynamic = ["version", "readme"]
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "amulet-compiler-target == 1.0"
+]
+
+[project.optional-dependencies]
+docs = [
+    "Sphinx>=1.7.4",
+    "sphinx-autodoc-typehints>=1.3.0",
+    "sphinx_rtd_theme>=0.3.1",
+]
+dev = [
+    "black>=22.3",
+    "pre_commit>=1.11.1",
+    "isort",
+    "autoflake",
+    "mypy",
+    "types-pyinstaller",
+    "wheel",
+    "versioneer",
+    "pybind11_stubgen @ git+https://github.com/Amulet-Team/pybind11-stubgen.git@c3a6ef67ec23d5a39e8cdc73b2c3cd8c1794d6f2",
+]
+
+[project.urls]
+Homepage = "https://www.amuletmc.com"
+Repository = "https://github.com/Amulet-Team/Amulet-LevelDB"
+Issues = "https://github.com/Amulet-Team/Amulet-LevelDB/issues"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.package-data]
+"*" = [
+    "*Config.cmake",
+    "**/*.hpp",
+    "**/*.dll",
+    "**/*.so",
+    "**/*.dylib",
+    "**/*.lib",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "leveldb.__version__"}
+readme = {file = ["README.md"], content-type = "text/markdown"}
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "src/leveldb/_version.py"
+versionfile_build = "leveldb/_version.py"
+tag_prefix = ""
+parentdir_prefix = "leveldb-"

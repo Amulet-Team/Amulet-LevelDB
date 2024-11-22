@@ -1,4 +1,4 @@
-recursive-include src/leveldb *.py *.pyi *.hpp *.cpp
-recursive-include bin *.lib
-recursive-include zlib *.h
-recursive-include leveldb-mcpe *.h *.cc
+recursive-include zlib *.h CMakeLists.txt
+recursive-include leveldb-mcpe *.h *.cc CMakeLists.txt
+
+recursive-include src/leveldb *.hpp *.cpp *Config.cmake

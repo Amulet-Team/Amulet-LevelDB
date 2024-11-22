@@ -153,18 +153,15 @@ std::unique_ptr<Amulet::LevelDB> open_leveldb(
                 return std::make_unique<Amulet::LevelDB>(
                     std::unique_ptr<leveldb::DB>(_db),
                     std::move(options));
-            } else {
-                throw LevelDBException("Could not recover corrupted database. " + status.ToString());
             }
         }
-        break;
+        throw LevelDBException("Could not recover corrupted database. " + status.ToString());
     case leveldb::Status::kNotSupported:
         if (status.ToString().ends_with("Marketplace worlds are not supported.")) {
             throw LevelDBEncrypted("Marketplace worlds are not supported.");
         }
-    default:
-        throw LevelDBException(status.ToString());
     }
+    throw LevelDBException(status.ToString());
 }
 
 class LevelDBKeysIterator {

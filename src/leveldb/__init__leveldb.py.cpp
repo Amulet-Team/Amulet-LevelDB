@@ -16,7 +16,7 @@
 #include <pybind11/typing.h>
 #include <pybind11_extensions/pybind11.hpp>
 
-#include "leveldb.hpp"
+#include <leveldb.hpp>
 
 namespace py = pybind11;
 

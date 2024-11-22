@@ -294,22 +294,10 @@ public:
     }
 };
 
-bool init_run = false;
-
 } // namespace
 
-void init_leveldb(py::module m)
+static void init_module(py::module m)
 {
-    if (init_run) {
-        return;
-    }
-    init_run = true;
-
-    m.attr("__path__") = py::module::import("importlib.util").attr("find_spec")("leveldb").attr("submodule_search_locations");
-
-    py::dict version_data = py::module::import("leveldb._version").attr("get_versions")();
-    m.attr("__version__") = version_data["version"];
-
     py::register_local_exception<LevelDBException>(m, "LevelDBException");
     py::register_local_exception<LevelDBEncrypted>(m, "LevelDBEncrypted");
 
@@ -610,5 +598,6 @@ void init_leveldb(py::module m)
         py::doc("An iterable of all items in the database."));
 }
 
-PYBIND11_MODULE(__init__, m) { init_leveldb(m); }
-PYBIND11_MODULE(leveldb, m) { init_leveldb(m); }
+PYBIND11_MODULE(_leveldb, m) {
+    m.def("init", &init_module);
+}

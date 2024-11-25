@@ -19,7 +19,7 @@ class CMakeExtension(Extension):
         self.sourcedir = os.fspath(Path(sourcedir).resolve())
 
 
-cmdclass: dict[str, type[Command]]  = versioneer.get_cmdclass()
+cmdclass: dict[str, type[Command]] = versioneer.get_cmdclass()
 
 
 class CMakeBuild(cmdclass.get("build_ext", build_ext)):
@@ -36,21 +36,27 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
                 platform_args.extend(["-A", "Win32"])
             platform_args.extend(["-T", "v143"])
 
-        subprocess.run([
-            "cmake",
-            *platform_args,
-            f"-DPYTHON_EXECUTABLE={sys.executable}",
-            f"-Dpybind11_DIR={pybind11.get_cmake_dir().replace(os.sep, '/')}",
-            f"-Dpybind11_extensions_DIR={pybind11_extensions.__path__[0].replace(os.sep, '/')}",
-            f"-DCMAKE_INSTALL_PREFIX=install",
-            f'-DSRC_INSTALL_DIR={src_dir}',
-            '-B', 'build',
-        ])
+        subprocess.run(
+            [
+                "cmake",
+                *platform_args,
+                f"-DPYTHON_EXECUTABLE={sys.executable}",
+                f"-Dpybind11_DIR={pybind11.get_cmake_dir().replace(os.sep, '/')}",
+                f"-Dpybind11_extensions_DIR={pybind11_extensions.__path__[0].replace(os.sep, '/')}",
+                f"-DCMAKE_INSTALL_PREFIX=install",
+                f"-DSRC_INSTALL_DIR={src_dir}",
+                "-B",
+                "build",
+            ]
+        )
         subprocess.run(["cmake", "--build", "build", "--config", "Release"])
         subprocess.run(["cmake", "--install", "build", "--config", "Release"])
 
         # Copy leveldb-mcpe header files
-        shutil.copytree("submodules/leveldb-mcpe/include/leveldb", src_dir / "leveldb/include/leveldb")
+        shutil.copytree(
+            "submodules/leveldb-mcpe/include/leveldb",
+            src_dir / "leveldb/include/leveldb",
+        )
 
 
 cmdclass["build_ext"] = CMakeBuild

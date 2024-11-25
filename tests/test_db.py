@@ -417,10 +417,7 @@ class LevelDBTestCase(unittest.TestCase):
     def test_thread_write(self) -> None:
         count = 10_000
         data = [
-            [
-                struct.pack(">i", i + j)
-                for j in range(count)
-            ]
+            [struct.pack(">i", i + j) for j in range(count)]
             for i in range(0, count * 10, count)
         ]
         m = {k: k for k in sum(data, [])}
@@ -461,10 +458,7 @@ class LevelDBTestCase(unittest.TestCase):
     def test_thread_read(self) -> None:
         count = 10_000
         data = [
-            [
-                struct.pack(">i", i + j)
-                for j in range(count)
-            ]
+            [struct.pack(">i", i + j) for j in range(count)]
             for i in range(0, count * 10, count)
         ]
         m = {k: k for k in sum(data, [])}

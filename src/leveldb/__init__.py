@@ -8,6 +8,7 @@ from . import _version
 __all__ = ["LevelDB", "LevelDBEncrypted", "LevelDBException", "LevelDBIterator"]
 
 if TYPE_CHECKING:
+
     class LevelDB:
         """
         A LevelDB database
@@ -149,7 +150,9 @@ if TYPE_CHECKING:
             :raises: runtime_error if iterator is not valid.
             """
 
+
 __version__ = _version.get_versions()["version"]
+
 
 def _init() -> None:
     import os
@@ -168,6 +171,8 @@ def _init() -> None:
         os.environ["PATH"] = os.environ.get("PATH", "") + os.pathsep + path
 
     from ._leveldb import init
+
     init(sys.modules[__name__])
+
 
 _init()

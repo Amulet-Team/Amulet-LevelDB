@@ -164,14 +164,8 @@ def _init() -> None:
         return
     if sys.platform == "win32":
         os.add_dll_directory(path)
-    elif sys.platform == "darwin":
-        os.environ["DYLD_LIBRARY_PATH"] = (
-                os.environ.get("DYLD_LIBRARY_PATH", "") + os.pathsep + path
-        )
     else:
-        os.environ["LD_LIBRARY_PATH"] = (
-                os.environ.get("LD_LIBRARY_PATH", "") + os.pathsep + path
-        )
+        os.environ["PATH"] = os.environ.get("PATH", "") + os.pathsep + path
 
     from ._leveldb import init
     init(sys.modules[__name__])

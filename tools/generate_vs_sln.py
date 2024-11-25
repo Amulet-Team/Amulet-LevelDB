@@ -4,7 +4,14 @@ from __future__ import annotations
 import os
 import pybind11
 import pybind11_extensions
-from shared.generate_vs_sln import ProjectData, CompileMode, get_files, PythonIncludeDir, PythonLibraryDir, write
+from shared.generate_vs_sln import (
+    ProjectData,
+    CompileMode,
+    get_files,
+    PythonIncludeDir,
+    PythonLibraryDir,
+    write,
+)
 
 RootDir = os.path.dirname(os.path.dirname(__file__))
 SrcDir = os.path.join(RootDir, "src")
@@ -73,7 +80,7 @@ def main() -> None:
             (leveldb_mcpe_path, "port", "port_win.cc"),
             (leveldb_mcpe_path, "util", "env_win.cc"),
             (leveldb_mcpe_path, "util", "win_logger.cc"),
-        ]
+        ],
     )
     leveldb_path = os.path.join(SrcDir, "leveldb")
     leveldb_py = ProjectData(
@@ -83,9 +90,7 @@ def main() -> None:
             root_dir=leveldb_path,
             ext="cpp",
         ),
-        include_files=get_files(
-            root_dir=leveldb_path, ext="hpp"
-        ),
+        include_files=get_files(root_dir=leveldb_path, ext="hpp"),
         include_dirs=[
             PythonIncludeDir,
             pybind11.get_include(),
@@ -100,10 +105,7 @@ def main() -> None:
             "LEVELDB_PLATFORM_WINDOWS",
             "DLLX=__declspec(dllexport)",
         ],
-        library_dirs=[
-            PythonLibraryDir,
-            os.path.join(RootDir, "bin", "zlib", "win64")
-        ],
+        library_dirs=[PythonLibraryDir, os.path.join(RootDir, "bin", "zlib", "win64")],
         dependencies=[
             leveldb_lib,
             "zlibstatic",

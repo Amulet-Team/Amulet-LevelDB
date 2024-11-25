@@ -56,6 +56,7 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
         shutil.copytree(
             "submodules/leveldb-mcpe/include/leveldb",
             src_dir / "leveldb/include/leveldb",
+            dirs_exist_ok=True
         )
 
 

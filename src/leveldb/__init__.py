@@ -159,18 +159,26 @@ def _init() -> None:
     import os
     import sys
     import logging
+    import ctypes
 
-    path = os.path.join(os.path.dirname(__file__), "bin")
-    if not os.path.isdir(path):
+    bin_dir = os.path.join(os.path.dirname(__file__), "bin")
+    if sys.platform == "win32":
+        lib_path = os.path.join(bin_dir, "leveldb_mcpe.dll")
+    elif sys.platform == "darwin":
+        lib_path = os.path.join(bin_dir, "libleveldb_mcpe.dylib")
+    elif sys.platform == "linux":
+        lib_path = os.path.join(bin_dir, "libleveldb_mcpe.so")
+    else:
+        raise RuntimeError(f"Unsupported platform {sys.platform}")
+
+    if not os.path.isfile(lib_path):
         # This can be imported during the build process to get __version__ before the extension has been compiled.
         # In this case issue a warning and return.
         logging.warning("leveldb has not been compiled.")
         return
-    if sys.platform == "win32":
-        os.add_dll_directory(path)
-    else:
-        import ctypes
-        ctypes.cdll.LoadLibrary(glob.glob(os.path.join(glob.escape(path), "*leveldb_mcpe*"))[0])
+
+    # Load the shared library
+    ctypes.cdll.LoadLibrary(lib_path)
 
     from ._leveldb import init
 

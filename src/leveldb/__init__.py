@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import glob
 from typing import TYPE_CHECKING
 import collections.abc
 
@@ -168,7 +169,8 @@ def _init() -> None:
     if sys.platform == "win32":
         os.add_dll_directory(path)
     else:
-        os.environ["PATH"] = os.environ.get("PATH", "") + os.pathsep + path
+        import ctypes
+        ctypes.cdll.LoadLibrary(glob.glob(os.path.join(glob.escape(path), "*leveldb_mcpe*"))[0])
 
     from ._leveldb import init
 

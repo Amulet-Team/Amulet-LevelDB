@@ -61,7 +61,6 @@ include-package-data = false
 ]
 
 [tool.setuptools.dynamic]
-version = {attr = "leveldb.__version__"}
 readme = {file = ["README.md"], content-type = "text/markdown"}
 
 [tool.versioneer]

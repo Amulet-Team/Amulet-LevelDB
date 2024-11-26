@@ -8,3 +8,5 @@ recursive-include submodules/leveldb-mcpe *.h *.cc CMakeLists.txt LICENSE
 recursive-include src/leveldb *.hpp *.cpp *Config.cmake
 
 include CMakeLists.txt
+
+prune tests

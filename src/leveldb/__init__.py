@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import glob
 from typing import TYPE_CHECKING
 import collections.abc
 
@@ -158,24 +157,16 @@ __version__ = _version.get_versions()["version"]
 def _init() -> None:
     import os
     import sys
-    import logging
     import ctypes
 
-    bin_dir = os.path.join(os.path.dirname(__file__), "bin")
     if sys.platform == "win32":
-        lib_path = os.path.join(bin_dir, "leveldb_mcpe.dll")
+        lib_path = os.path.join(os.path.dirname(__file__), "leveldb_mcpe.dll")
     elif sys.platform == "darwin":
-        lib_path = os.path.join(bin_dir, "libleveldb_mcpe.dylib")
+        lib_path = os.path.join(os.path.dirname(__file__), "libleveldb_mcpe.dylib")
     elif sys.platform == "linux":
-        lib_path = os.path.join(bin_dir, "libleveldb_mcpe.so")
+        lib_path = os.path.join(os.path.dirname(__file__), "libleveldb_mcpe.so")
     else:
         raise RuntimeError(f"Unsupported platform {sys.platform}")
-
-    if not os.path.isfile(lib_path):
-        # This can be imported during the build process to get __version__ before the extension has been compiled.
-        # In this case issue a warning and return.
-        logging.warning("leveldb has not been compiled.")
-        return
 
     # Load the shared library
     ctypes.cdll.LoadLibrary(lib_path)

@@ -46,5 +46,5 @@ target_link_libraries( _leveldb PRIVATE pybind11_extensions )
 target_include_directories(_leveldb PRIVATE src/leveldb/include)
 
 # Install
-install(TARGETS leveldb_mcpe DESTINATION "${SRC_INSTALL_DIR}/leveldb/bin")
+install(TARGETS leveldb_mcpe DESTINATION "${SRC_INSTALL_DIR}/leveldb")
 install(TARGETS _leveldb DESTINATION "${SRC_INSTALL_DIR}/leveldb")

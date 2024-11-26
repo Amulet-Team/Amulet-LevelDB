@@ -171,12 +171,6 @@ def _init() -> None:
     else:
         raise RuntimeError(f"Unsupported platform {sys.platform}")
 
-    if not os.path.isfile(lib_path):
-        # This can be imported during the build process to get __version__ before the extension has been compiled.
-        # In this case issue a warning and return.
-        logging.warning("leveldb has not been compiled.")
-        return
-
     # Load the shared library
     ctypes.cdll.LoadLibrary(lib_path)
 

@@ -39,7 +39,7 @@ dev = [
     "types-pyinstaller",
     "wheel",
     "versioneer",
-    "pybind11_stubgen @ git+https://github.com/Amulet-Team/pybind11-stubgen.git@c3a6ef67ec23d5a39e8cdc73b2c3cd8c1794d6f2",
+    "pybind11_stubgen" # @ git+https://github.com/Amulet-Team/pybind11-stubgen.git@c3a6ef67ec23d5a39e8cdc73b2c3cd8c1794d6f2",
 ]
 
 [project.urls]

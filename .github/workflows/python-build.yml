@@ -13,14 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: windows-latest, architecture: x64, python-version: "3.11" }
-          - { os: windows-latest, architecture: x86, python-version: "3.11" }
-          - { os: macos-13, architecture: x64, python-version: "3.11" }
-          - { os: macos-latest, architecture: arm64, python-version: "3.11" }
-          - { os: windows-latest, architecture: x64, python-version: "3.12" }
-          - { os: windows-latest, architecture: x86, python-version: "3.12" }
-          - { os: macos-13, architecture: x64, python-version: "3.12" }
-          - { os: macos-latest, architecture: arm64, python-version: "3.12" }
+          - { os: ubuntu-latest, architecture: x64, python-version: "3.11" }
 
     runs-on: ${{ matrix.cfg.os }}
 
@@ -43,5 +36,5 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.AMULET_LEVELDB_PYPI_PASSWORD }}
       run: |
-        python -m build
+        python -m build --sdist
         twine upload dist/* --skip-existing

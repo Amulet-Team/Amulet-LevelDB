@@ -36,6 +36,8 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
                 platform_args.extend(["-A", "Win32"])
             platform_args.extend(["-T", "v143"])
 
+        if subprocess.run(["cmake", "--version"]).returncode:
+            raise RuntimeError("Could not find cmake")
         if subprocess.run(
             [
                 "cmake",

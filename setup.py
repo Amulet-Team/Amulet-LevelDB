@@ -52,16 +52,20 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
             ]
         ).returncode:
             raise RuntimeError("Error configuring amulet_leveldb")
-        if subprocess.run(["cmake", "--build", "build", "--config", "Release"]).returncode:
-            raise RuntimeError("Error installing amulet_leveldb")
-        if subprocess.run(["cmake", "--install", "build", "--config", "Release"]).returncode:
+        if subprocess.run(
+            ["cmake", "--build", "build", "--config", "Release"]
+        ).returncode:
+            raise RuntimeError("Error building amulet_leveldb")
+        if subprocess.run(
+            ["cmake", "--install", "build", "--config", "Release"]
+        ).returncode:
             raise RuntimeError("Error installing amulet_leveldb")
 
         # Copy leveldb-mcpe header files
         shutil.copytree(
             "submodules/leveldb-mcpe/include/leveldb",
             src_dir / "leveldb/include/leveldb",
-            dirs_exist_ok=True
+            dirs_exist_ok=True,
         )
 
 

@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.dll
+*.so
+*.dylib
 
 # Distribution / packaging
 .Python

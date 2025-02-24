@@ -18,20 +18,37 @@ else()
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+if (MSVC)
+    add_definitions("/MP")
+endif()
+
+include(FetchContent)
+
+# Add zlib
+set(ZLIB_BUILD_EXAMPLES OFF)
+FetchContent_Declare(
+  zlib
+  GIT_REPOSITORY https://github.com/madler/zlib.git
+  GIT_TAG        51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf
+)
+FetchContent_MakeAvailable(zlib)
+set(ZLIB_ROOT ${zlib_SOURCE_DIR})
+set(ZLIB_USE_STATIC_LIBS ON)
+set(ZLIB_LIBRARY ${INSTALL_LIB_DIR})
+find_package(ZLIB REQUIRED)
+target_compile_definitions(zlibstatic PUBLIC ZLIB_CONST)
+
 # Add pybind11
 find_package(pybind11 CONFIG REQUIRED)
 find_package(pybind11_extensions CONFIG REQUIRED)
 
-# Add zlib fallback
-set(ZLIB_BUILD_EXAMPLES OFF)
-add_subdirectory(submodules/zlib)
-set(ZLIB_ROOT submodules/zlib)
-set(ZLIB_USE_STATIC_LIBS ON)
-set(ZLIB_LIBRARY ${INSTALL_LIB_DIR})
-find_package(ZLIB REQUIRED)
-
 # Add implementation
-add_subdirectory(submodules/leveldb-mcpe)
+FetchContent_Declare(
+  leveldb_mcpe
+  GIT_REPOSITORY https://github.com/Amulet-Team/leveldb-mcpe.git
+  GIT_TAG        4846fc72c7eda860b1bcf6efc58920a9273da928
+)
+FetchContent_MakeAvailable(leveldb_mcpe)
 
 # Add python extension
 pybind11_add_module(_leveldb src/leveldb/__init__leveldb.py.cpp)

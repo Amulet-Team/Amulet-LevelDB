@@ -49,7 +49,6 @@ FetchContent_Declare(
   GIT_TAG        4846fc72c7eda860b1bcf6efc58920a9273da928
 )
 FetchContent_MakeAvailable(leveldb_mcpe)
-add_subdirectory(${leveldb_mcpe_SOURCE_DIR})
 
 # Add python extension
 pybind11_add_module(_leveldb src/leveldb/__init__leveldb.py.cpp)

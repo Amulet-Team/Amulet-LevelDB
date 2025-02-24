@@ -61,13 +61,6 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
         ).returncode:
             raise RuntimeError("Error installing amulet_leveldb")
 
-        # Copy leveldb-mcpe header files
-        shutil.copytree(
-            "submodules/leveldb-mcpe/include/leveldb",
-            src_dir / "leveldb/include/leveldb",
-            dirs_exist_ok=True,
-        )
-
 
 cmdclass["build_ext"] = CMakeBuild
 

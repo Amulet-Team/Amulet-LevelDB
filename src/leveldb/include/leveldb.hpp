@@ -37,7 +37,7 @@ private:
 
 public:
     LevelDBIterator(
-        std::unique_ptr<leveldb::Iterator>&& iterator)
+        std::unique_ptr<leveldb::Iterator> iterator)
         : iterator(std::move(iterator))
     {
     }
@@ -89,8 +89,8 @@ private:
 
 public:
     LevelDB(
-        std::unique_ptr<leveldb::DB>&& db,
-        std::unique_ptr<LevelDBOptions>&& options)
+        std::unique_ptr<leveldb::DB> db,
+        std::unique_ptr<LevelDBOptions> options)
         : db(std::move(db))
         , options(std::move(options))
     {

@@ -87,9 +87,6 @@ private:
     // During destruction of the iterator a callback will remove the pointer.
     std::set<LevelDBIterator*> iterators;
 
-    LevelDB(const LevelDB&) { }
-    void operator=(const LevelDB&) { }
-
 public:
     LevelDB(
         std::unique_ptr<leveldb::DB>&& db,
@@ -98,6 +95,9 @@ public:
         , options(std::move(options))
     {
     }
+
+    LevelDB(const LevelDB&) = delete;
+    LevelDB(LevelDB&&) = delete;
 
     void close()
     {

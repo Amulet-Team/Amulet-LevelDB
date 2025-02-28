@@ -37,7 +37,7 @@ private:
 
 public:
     LevelDBIterator(
-        std::unique_ptr<leveldb::Iterator>&& iterator)
+        std::unique_ptr<leveldb::Iterator> iterator)
         : iterator(std::move(iterator))
     {
     }
@@ -81,28 +81,26 @@ private:
     // The iterators created by the leveldb object.
     // We need to allow deletion of the iterators while the db is open.
     // We need to destroy all iterators before closing the database.
-    // We can't store them in a shared_ptr because this would keep them alive.
-    // We can't store them in a weak_ptr because that does not support comparison for lookup.
-    // The only way I can find is raw pointers.
     // During destruction of the iterator a callback will remove the pointer.
     std::set<LevelDBIterator*> iterators;
 
-    LevelDB(const LevelDB&) { }
-    void operator=(const LevelDB&) { }
-
 public:
     LevelDB(
-        std::unique_ptr<leveldb::DB>&& db,
-        std::unique_ptr<LevelDBOptions>&& options)
+        std::unique_ptr<leveldb::DB> db,
+        std::unique_ptr<LevelDBOptions> options)
         : db(std::move(db))
         , options(std::move(options))
     {
     }
 
+    LevelDB(const LevelDB&) = delete;
+    LevelDB(LevelDB&&) = delete;
+
     void close()
     {
         if (db) {
             while (!iterators.empty()) {
+                // Destroy automatically removes the item from iterators.
                 (*iterators.begin())->destroy();
             }
             db.reset();
@@ -137,7 +135,7 @@ public:
         auto iterator = std::make_unique<LevelDBIterator>(
             std::unique_ptr<leveldb::Iterator>(db->NewIterator(options->read_options)));
 
-        // Get a raw poiner to the iterator
+        // Get a raw pointer to the iterator
         LevelDBIterator* ptr = iterator.get();
 
         // Add the iterator pointer to the set

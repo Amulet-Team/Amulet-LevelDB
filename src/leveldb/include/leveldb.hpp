@@ -103,6 +103,7 @@ public:
     {
         if (db) {
             while (!iterators.empty()) {
+                // Destroy automatically removes the item from iterators.
                 (*iterators.begin())->destroy();
             }
             db.reset();
@@ -137,7 +138,7 @@ public:
         auto iterator = std::make_unique<LevelDBIterator>(
             std::unique_ptr<leveldb::Iterator>(db->NewIterator(options->read_options)));
 
-        // Get a raw poiner to the iterator
+        // Get a raw pointer to the iterator
         LevelDBIterator* ptr = iterator.get();
 
         // Add the iterator pointer to the set

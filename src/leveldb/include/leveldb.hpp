@@ -81,9 +81,6 @@ private:
     // The iterators created by the leveldb object.
     // We need to allow deletion of the iterators while the db is open.
     // We need to destroy all iterators before closing the database.
-    // We can't store them in a shared_ptr because this would keep them alive.
-    // We can't store them in a weak_ptr because that does not support comparison for lookup.
-    // The only way I can find is raw pointers.
     // During destruction of the iterator a callback will remove the pointer.
     std::set<LevelDBIterator*> iterators;
 

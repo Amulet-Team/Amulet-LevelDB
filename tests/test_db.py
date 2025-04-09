@@ -139,7 +139,7 @@ class LevelDBTestCase(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 del db[b"key"]
             with self.assertRaises(RuntimeError):
-                list(db.iterate(b"\x00", b"\xFF"))
+                list(db.iterate(b"\x00", b"\xff"))
             with self.assertRaises(RuntimeError):
                 list(db.keys())
             with self.assertRaises(RuntimeError):

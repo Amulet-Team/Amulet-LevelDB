@@ -18,32 +18,38 @@ jobs:
     strategy:
       matrix:
         cfg:
-          - { os: windows-latest, architecture: x64, python-version: "3.11" }
-          - { os: windows-latest, architecture: x86, python-version: "3.11" }
-          - { os: macos-13, architecture: x64, python-version: "3.11" }
-          - { os: macos-latest, architecture: arm64, python-version: "3.11" }
-          - { os: ubuntu-latest, architecture: x64, python-version: "3.11" }
-          - { os: windows-latest, architecture: x64, python-version: "3.12" }
-          - { os: windows-latest, architecture: x86, python-version: "3.12" }
-          - { os: macos-13, architecture: x64, python-version: "3.12" }
-          - { os: macos-latest, architecture: arm64, python-version: "3.12" }
-          - { os: ubuntu-latest, architecture: x64, python-version: "3.12" }
+          - { python-version: "3.11", os: windows-latest, architecture: x64 }
+          - { python-version: "3.11", os: macos-13, architecture: x64 }
+          - { python-version: "3.11", os: macos-latest, architecture: arm64 }
+          - { python-version: "3.11", os: ubuntu-latest, architecture: x64 }
+          - { python-version: "3.12", os: windows-latest, architecture: x64 }
+          - { python-version: "3.12", os: macos-13, architecture: x64 }
+          - { python-version: "3.12", os: macos-latest, architecture: arm64 }
+          - { python-version: "3.12", os: ubuntu-latest, architecture: x64 }
+          - { python-version: "3.13", os: windows-latest, architecture: x64 }
+          - { python-version: "3.13", os: macos-13, architecture: x64 }
+          - { python-version: "3.13", os: macos-latest, architecture: arm64 }
+          - { python-version: "3.13", os: ubuntu-latest, architecture: x64 }
 
     runs-on: ${{ matrix.cfg.os }}
+    defaults:
+      run:
+        shell: bash
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
+    - name: Checkout
+      uses: actions/checkout@v4
+
     - name: Set up Python ${{ matrix.cfg.python-version }} ${{ matrix.cfg.architecture }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.cfg.python-version }}
         architecture: ${{ matrix.cfg.architecture }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools
-        pip install -vvvv .
+        pip install -vv .
+
     - name: Test with unittest
       run: python -m unittest discover -v -s tests

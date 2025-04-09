@@ -1,12 +1,10 @@
 [build-system]
 requires = [
-    "setuptools >= 42",
-    "wheel",
-    "pybind11[global] == 2.13.6",
-    "Amulet-pybind11-extensions @ git+https://github.com/Amulet-Team/Amulet-pybind11-extensions.git@d79a41e0cb26c965c34f2b52c85496798e82121f",
-    "versioneer"
+    "setuptools>=42",
+    "versioneer",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "build_requires"
+backend-path = [""]
 
 [project]
 name = "amulet-leveldb"
@@ -14,14 +12,11 @@ authors = [
     {name = "James Clare"},
 ]
 description = "A pybind11 wrapper for Mojang's custom LevelDB."
-dynamic = ["version", "readme"]
+dynamic = ["version", "readme", "dependencies"]
 requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
-]
-dependencies = [
-    "amulet-compiler-target == 1.0"
 ]
 
 [project.optional-dependencies]
@@ -31,14 +26,17 @@ docs = [
     "sphinx_rtd_theme>=0.3.1",
 ]
 dev = [
+    "setuptools>=42",
+    "wheel",
+    "pybind11[global]==2.13.6",
+    "Amulet-pybind11-extensions", #@git+https://github.com/Amulet-Team/Amulet-pybind11-extensions.git@d79a41e0cb26c965c34f2b52c85496798e82121f",
+    "versioneer",
     "black>=22.3",
     "pre_commit>=1.11.1",
     "isort",
     "autoflake",
     "mypy",
     "types-pyinstaller",
-    "wheel",
-    "versioneer",
     "pybind11_stubgen" # @ git+https://github.com/Amulet-Team/pybind11-stubgen.git@c3a6ef67ec23d5a39e8cdc73b2c3cd8c1794d6f2",
 ]
 

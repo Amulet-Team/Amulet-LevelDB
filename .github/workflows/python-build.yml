@@ -12,18 +12,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cfg:
-          - { python-version: "3.11", os: windows-latest, architecture: x64 }
-          - { python-version: "3.11", os: macos-13, architecture: x64 }
-          - { python-version: "3.11", os: macos-latest, architecture: arm64 }
-          - { python-version: "3.12", os: windows-latest, architecture: x64 }
-          - { python-version: "3.12", os: macos-13, architecture: x64 }
-          - { python-version: "3.12", os: macos-latest, architecture: arm64 }
-          - { python-version: "3.13", os: windows-latest, architecture: x64 }
-          - { python-version: "3.13", os: macos-13, architecture: x64 }
-          - { python-version: "3.13", os: macos-latest, architecture: arm64 }
+        python-version: [ '3.11', '3.12', '3.13' ]
+        os: [ macos-13, windows-latest ]
 
-    runs-on: ${{ matrix.cfg.os }}
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash
@@ -32,11 +24,10 @@ jobs:
     - name: Clone Amulet-LevelDB
       uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.cfg.python-version }} ${{ matrix.cfg.architecture }}
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.cfg.python-version }}
-        architecture: ${{ matrix.cfg.architecture }}
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |

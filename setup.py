@@ -80,7 +80,7 @@ cmdclass["build_ext"] = CMakeBuild
 setup(
     version=versioneer.get_version(),
     cmdclass=cmdclass,
-    ext_modules=[Extension("leveldb._leveldb", [])],
+    ext_modules=[Extension("amulet.leveldb._leveldb", [])],
     install_requires=dependencies,
     **setup_args,
 )

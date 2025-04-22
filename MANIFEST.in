@@ -1,6 +1,6 @@
 include build_requires.py
 
-recursive-include src/leveldb *.hpp *.cpp *Config.cmake
+recursive-include src/amulet/leveldb *.hpp *.cpp *Config.cmake
 
 include CMakeLists.txt
 

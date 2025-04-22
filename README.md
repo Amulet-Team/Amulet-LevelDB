@@ -8,7 +8,7 @@ A pybind11 wrapper for Mojang's modified LevelDB library.
 
 ## Use
 ```py
-from leveldb import LevelDB
+from amulet.leveldb import LevelDB
 
 create_if_missing = True  # optional input. Default False.
 db = LevelDB("path/to/db", create_if_missing)
@@ -17,4 +17,4 @@ print(db.get(b"key"))
 # b"value"
 ```
 
-See the [source code](src/leveldb/__init__leveldb.py.cpp) for full documentation.
+See the [source code](src/amulet/leveldb/__init__leveldb.py.cpp) for full documentation.

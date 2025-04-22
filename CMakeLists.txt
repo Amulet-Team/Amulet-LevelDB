@@ -51,7 +51,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(leveldb_mcpe)
 
 # Add python extension
-pybind11_add_module(_leveldb src/leveldb/__init__leveldb.py.cpp)
+pybind11_add_module(_leveldb src/amulet/leveldb/__init__leveldb.py.cpp)
 target_compile_definitions(_leveldb PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 target_compile_definitions(_leveldb PRIVATE PYBIND11_VERSION="${pybind11_VERSION}")
 target_compile_definitions(_leveldb PRIVATE COMPILER_ID="${CMAKE_CXX_COMPILER_ID}")
@@ -63,12 +63,12 @@ else()
 endif()
 target_link_libraries( _leveldb PRIVATE leveldb_mcpe )
 target_link_libraries( _leveldb PRIVATE pybind11_extensions )
-target_include_directories(_leveldb PRIVATE src/leveldb/include)
+target_include_directories(_leveldb PRIVATE src/amulet/leveldb/include)
 
 # Install
-install(TARGETS leveldb_mcpe DESTINATION "${SRC_INSTALL_DIR}/leveldb")
-install(TARGETS _leveldb DESTINATION "${SRC_INSTALL_DIR}/leveldb")
+install(TARGETS leveldb_mcpe DESTINATION "${SRC_INSTALL_DIR}/amulet/leveldb")
+install(TARGETS _leveldb DESTINATION "${SRC_INSTALL_DIR}/amulet/leveldb")
 INSTALL (
     DIRECTORY ${leveldb_mcpe_SOURCE_DIR}/include/
-    DESTINATION ${SRC_INSTALL_DIR}/leveldb/include
+    DESTINATION ${SRC_INSTALL_DIR}/amulet/leveldb/include
 )

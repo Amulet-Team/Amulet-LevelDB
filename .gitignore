@@ -152,4 +152,4 @@ dmypy.json
 *.pdb
 sln/
 
-/src/leveldb/include/leveldb
+/src/amulet/leveldb/include/leveldb

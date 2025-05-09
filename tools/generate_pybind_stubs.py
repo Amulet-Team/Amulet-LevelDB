@@ -39,7 +39,7 @@ def eq_sub_func(match: re.Match) -> str:
     if match.string[: match.start()].endswith("@typing.overload\n"):
         # is overload
         if re.match(
-            f"\n{match.group('indent')}@typing.overload\n{match.group('indent')}def __eq__\(self, ",
+            f"\n{match.group('indent')}@typing.overload\n{match.group('indent')}def __eq__\\(self, ",
             match.string[match.end() :],
         ):
             # is not last overload
@@ -153,8 +153,8 @@ def patch_stubgen():
 
 
 def main() -> None:
-    leveldb_path = get_package_dir("leveldb")
-    src_path = os.path.dirname(leveldb_path)
+    leveldb_path = get_package_dir("amulet.leveldb")
+    src_path = os.path.dirname(os.path.dirname(leveldb_path))
 
     # Remove all existing stub files
     print("Removing stub files...")
@@ -171,13 +171,13 @@ def main() -> None:
     sys.argv = [
         "pybind11_stubgen",
         f"--output-dir={src_path}",
-        "leveldb",
+        "amulet.leveldb",
     ]
     pybind11_stubgen.main()
     # If pybind11_stubgen adds args to main
     # pybind11_stubgen.main([
     #     f"--output-dir={src_path}",
-    #     "leveldb",
+    #     "amulet.leveldb",
     # ])
 
     # Run normal stubgen on the python files

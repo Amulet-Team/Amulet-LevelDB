@@ -5,8 +5,8 @@ from setuptools import build_meta
 from setuptools.build_meta import *
 
 _extension_requirements = [
-    "pybind11[global]==2.13.6",
-    "Amulet-pybind11-extensions@git+https://github.com/Amulet-Team/Amulet-pybind11-extensions.git@d79a41e0cb26c965c34f2b52c85496798e82121f"
+    "pybind11==2.13.6",
+    "Amulet-pybind11-extensions~=1.0",
 ]
 
 

@@ -1,3 +1,7 @@
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/typing.h>
+
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -11,14 +15,12 @@
 #include <leveldb/write_batch.h>
 #include <leveldb/zlib_compressor.h>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/typing.h>
-#include <pybind11_extensions/pybind11.hpp>
+#include <amulet/pybind11_extensions/iterator.hpp>
 
-#include <leveldb.hpp>
+#include <amulet/leveldb.hpp>
 
 namespace py = pybind11;
+namespace pyext = Amulet::pybind11_extensions;
 
 namespace PYBIND11_NAMESPACE {
 namespace detail {
@@ -413,8 +415,7 @@ static void init_module(py::module m)
         py::doc(
             "Close the leveldb database.\n"
             "Only the owner of the database may close it.\n"
-            "If needed, an external lock must be used to ensure that no other threads are accessing the database."
-        ),
+            "If needed, an external lock must be used to ensure that no other threads are accessing the database."),
         py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(
@@ -543,10 +544,10 @@ static void init_module(py::module m)
             }
 
             if (end) {
-                return pybind11_extensions::make_iterator(
+                return pyext::make_iterator(
                     LevelDBItemsRangeIterator(std::move(iterator_ptr), end->cast<std::string>()));
             } else {
-                return pybind11_extensions::make_iterator(
+                return pyext::make_iterator(
                     LevelDBItemsIterator(std::move(iterator_ptr)));
             }
         },
@@ -564,7 +565,7 @@ static void init_module(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return pybind11_extensions::make_iterator(
+            return pyext::make_iterator(
                 LevelDBKeysIterator(std::move(iterator_ptr)));
         });
     LevelDB.def(
@@ -573,7 +574,7 @@ static void init_module(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return pybind11_extensions::make_iterator(
+            return pyext::make_iterator(
                 LevelDBKeysIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all keys in the database."));
@@ -584,7 +585,7 @@ static void init_module(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return pybind11_extensions::make_iterator(
+            return pyext::make_iterator(
                 LevelDBValuesIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all values in the database."));
@@ -595,12 +596,16 @@ static void init_module(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return pybind11_extensions::make_iterator(
+            return pyext::make_iterator(
                 LevelDBItemsIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all items in the database."));
 }
 
-PYBIND11_MODULE(_leveldb, m) {
-    m.def("init", &init_module);
+PYBIND11_MODULE(_leveldb, m)
+{
+    py::options options;
+    options.disable_function_signatures();
+    m.def("init", &init_module, py::doc("init(arg0: types.ModuleType) -> None"));
+    options.enable_function_signatures();
 }

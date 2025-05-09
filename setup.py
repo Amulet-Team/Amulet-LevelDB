@@ -1,12 +1,18 @@
 import os
 import subprocess
 import sys
+import typing
 from pathlib import Path
 
 from setuptools import setup, Extension, Command
 from setuptools.command.build_ext import build_ext
 
 import versioneer
+
+
+def fix_path(path: str | os.PathLike[typing.AnyStr]) -> str:
+    return os.path.realpath(path).replace(os.sep, "/")
+
 
 dependencies = [
     "amulet-compiler-target==1.0",
@@ -34,10 +40,16 @@ cmdclass: dict[str, type[Command]] = versioneer.get_cmdclass()
 class CMakeBuild(cmdclass.get("build_ext", build_ext)):
     def build_extension(self, ext):
         import pybind11
-        import pybind11_extensions
+        import amulet.pybind11_extensions
 
-        ext_fullpath = Path.cwd() / self.get_ext_fullpath("")
-        src_dir = ext_fullpath.parent.resolve()
+        ext_dir = (
+            (Path.cwd() / self.get_ext_fullpath("")).parent.resolve()
+            / "amulet"
+            / "leveldb"
+        )
+        leveldb_src_dir = (
+            Path.cwd() / "src" / "amulet" / "leveldb" if self.editable_mode else ext_dir
+        )
 
         platform_args = []
         if sys.platform == "win32":
@@ -56,9 +68,10 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
                 *platform_args,
                 f"-DPYTHON_EXECUTABLE={sys.executable}",
                 f"-Dpybind11_DIR={pybind11.get_cmake_dir().replace(os.sep, '/')}",
-                f"-Dpybind11_extensions_DIR={pybind11_extensions.__path__[0].replace(os.sep, '/')}",
+                f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
+                f"-Damulet_leveldb_DIR={fix_path(leveldb_src_dir)}",
+                f"-DAMULET_LEVELDB_EXT_DIR={fix_path(ext_dir)}",
                 f"-DCMAKE_INSTALL_PREFIX=install",
-                f"-DSRC_INSTALL_DIR={src_dir}",
                 "-B",
                 "build",
             ]

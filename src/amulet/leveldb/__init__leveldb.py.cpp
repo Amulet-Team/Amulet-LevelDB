@@ -1,3 +1,7 @@
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/typing.h>
+
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -10,10 +14,6 @@
 #include <leveldb/filter_policy.h>
 #include <leveldb/write_batch.h>
 #include <leveldb/zlib_compressor.h>
-
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/typing.h>
 
 #include <amulet/pybind11_extensions/iterator.hpp>
 
@@ -415,8 +415,7 @@ static void init_module(py::module m)
         py::doc(
             "Close the leveldb database.\n"
             "Only the owner of the database may close it.\n"
-            "If needed, an external lock must be used to ensure that no other threads are accessing the database."
-        ),
+            "If needed, an external lock must be used to ensure that no other threads are accessing the database."),
         py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(
@@ -603,6 +602,10 @@ static void init_module(py::module m)
         py::doc("An iterable of all items in the database."));
 }
 
-PYBIND11_MODULE(_leveldb, m) {
-    m.def("init", &init_module);
+PYBIND11_MODULE(_leveldb, m)
+{
+    py::options options;
+    options.disable_function_signatures();
+    m.def("init", &init_module, py::doc("init(arg0: types.ModuleType) -> None"));
+    options.enable_function_signatures();
 }

@@ -4,7 +4,7 @@ import os
 import shutil
 
 import pybind11
-import pybind11_extensions
+import amulet.pybind11_extensions
 
 
 def fix_path(path: str) -> str:
@@ -25,7 +25,7 @@ def main():
         platform_args.extend(["-T", "v143"])
 
     os.chdir(RootDir)
-    shutil.rmtree("build/CMakeFiles", ignore_errors=True)
+    shutil.rmtree(os.path.join(RootDir, "build", "CMakeFiles"), ignore_errors=True)
 
     if subprocess.run(
         [
@@ -33,9 +33,9 @@ def main():
             *platform_args,
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-Dpybind11_DIR={pybind11.get_cmake_dir().replace(os.sep, '/')}",
-            f"-Dpybind11_extensions_DIR={pybind11_extensions.__path__[0].replace(os.sep, '/')}",
+            f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
+            f"-Damulet_leveldb_DIR={fix_path(os.path.join(RootDir, 'src', 'amulet', 'leveldb'))}",
             f"-DCMAKE_INSTALL_PREFIX=install",
-            f"-DSRC_INSTALL_DIR=src",
             "-B",
             "build",
         ]

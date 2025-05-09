@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
 project(amulet_leveldb LANGUAGES CXX)
-set(SRC_INSTALL_DIR "." CACHE PATH "The path to the src directory to install into.")
 
 # Set C++20
 set(CMAKE_CXX_STANDARD 20)
@@ -40,7 +39,7 @@ target_compile_definitions(zlibstatic PUBLIC ZLIB_CONST)
 
 # Add pybind11
 find_package(pybind11 CONFIG REQUIRED)
-find_package(pybind11_extensions CONFIG REQUIRED)
+find_package(amulet_pybind11_extensions CONFIG REQUIRED)
 
 # Add implementation
 FetchContent_Declare(
@@ -62,13 +61,17 @@ else()
     target_compile_definitions(_leveldb PRIVATE "DLLX=")
 endif()
 target_link_libraries( _leveldb PRIVATE leveldb_mcpe )
-target_link_libraries( _leveldb PRIVATE pybind11_extensions )
-target_include_directories(_leveldb PRIVATE src/amulet/leveldb/include)
+target_link_libraries( _leveldb PRIVATE amulet_pybind11_extensions )
+target_include_directories(_leveldb PRIVATE "${amulet_leveldb_DIR}/include")
+
+if(NOT DEFINED AMULET_LEVELDB_EXT_DIR)
+    set(AMULET_LEVELDB_EXT_DIR ${amulet_leveldb_DIR})
+endif()
 
 # Install
-install(TARGETS leveldb_mcpe DESTINATION "${SRC_INSTALL_DIR}/amulet/leveldb")
-install(TARGETS _leveldb DESTINATION "${SRC_INSTALL_DIR}/amulet/leveldb")
+install(TARGETS leveldb_mcpe DESTINATION ${amulet_leveldb_DIR})
+install(TARGETS _leveldb DESTINATION ${AMULET_LEVELDB_EXT_DIR})
 INSTALL (
     DIRECTORY ${leveldb_mcpe_SOURCE_DIR}/include/
-    DESTINATION ${SRC_INSTALL_DIR}/amulet/leveldb/include
+    DESTINATION ${amulet_leveldb_DIR}/include
 )

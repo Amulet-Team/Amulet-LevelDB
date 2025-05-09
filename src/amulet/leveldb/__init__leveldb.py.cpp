@@ -14,11 +14,13 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/typing.h>
-#include <pybind11_extensions/pybind11.hpp>
 
-#include <leveldb.hpp>
+#include <amulet/pybind11_extensions/iterator.hpp>
+
+#include <amulet/leveldb.hpp>
 
 namespace py = pybind11;
+namespace pyext = Amulet::pybind11_extensions;
 
 namespace PYBIND11_NAMESPACE {
 namespace detail {
@@ -543,10 +545,10 @@ static void init_module(py::module m)
             }
 
             if (end) {
-                return pybind11_extensions::make_iterator(
+                return pyext::make_iterator(
                     LevelDBItemsRangeIterator(std::move(iterator_ptr), end->cast<std::string>()));
             } else {
-                return pybind11_extensions::make_iterator(
+                return pyext::make_iterator(
                     LevelDBItemsIterator(std::move(iterator_ptr)));
             }
         },
@@ -564,7 +566,7 @@ static void init_module(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return pybind11_extensions::make_iterator(
+            return pyext::make_iterator(
                 LevelDBKeysIterator(std::move(iterator_ptr)));
         });
     LevelDB.def(
@@ -573,7 +575,7 @@ static void init_module(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return pybind11_extensions::make_iterator(
+            return pyext::make_iterator(
                 LevelDBKeysIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all keys in the database."));
@@ -584,7 +586,7 @@ static void init_module(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return pybind11_extensions::make_iterator(
+            return pyext::make_iterator(
                 LevelDBValuesIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all values in the database."));
@@ -595,7 +597,7 @@ static void init_module(py::module m)
             auto iterator_ptr = self.create_iterator();
             auto& iterator = *iterator_ptr;
             iterator->SeekToFirst();
-            return pybind11_extensions::make_iterator(
+            return pyext::make_iterator(
                 LevelDBItemsIterator(std::move(iterator_ptr)));
         },
         py::doc("An iterable of all items in the database."));

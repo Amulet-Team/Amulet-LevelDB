@@ -2,6 +2,7 @@
 requires = [
     "setuptools>=42",
     "versioneer",
+    "amulet-compiler-version@git+https://github.com/Amulet-Team/Amulet-Compiler-Version.git@3.0",
 ]
 build-backend = "build_requires"
 backend-path = [""]
@@ -37,7 +38,7 @@ dev = [
     "autoflake",
     "mypy",
     "types-pyinstaller",
-    "pybind11_stubgen" # @ git+https://github.com/Amulet-Team/pybind11-stubgen.git@c3a6ef67ec23d5a39e8cdc73b2c3cd8c1794d6f2",
+    "pybind11_stubgen"
 ]
 
 [project.urls]

@@ -7,32 +7,18 @@ from pathlib import Path
 from setuptools import setup, Extension, Command
 from setuptools.command.build_ext import build_ext
 
+from packaging.version import Version
 import versioneer
+
+import requirements
+import amulet_compiler_version
 
 
 def fix_path(path: str | os.PathLike[typing.AnyStr]) -> str:
     return os.path.realpath(path).replace(os.sep, "/")
 
 
-dependencies = [
-    "amulet-compiler-target==1.0",
-]
-setup_args = {}
-
-try:
-    import amulet_compiler_version
-except ImportError:
-    dependencies.append("amulet-compiler-version==1.3.0")
-else:
-    dependencies.append(
-        f"amulet-compiler-version=={amulet_compiler_version.__version__}"
-    )
-    setup_args["options"] = {
-        "bdist_wheel": {
-            "build_number": f"1.{amulet_compiler_version.compiler_id}.{amulet_compiler_version.compiler_version}"
-        }
-    }
-
+dependencies = requirements.get_runtime_dependencies()
 
 cmdclass: dict[str, type[Command]] = versioneer.get_cmdclass()
 
@@ -90,10 +76,35 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
 cmdclass["build_ext"] = CMakeBuild
 
 
+def _get_version() -> str:
+    version_str: str = versioneer.get_version()
+
+    if os.environ.get("AMULET_FREEZE_COMPILER", None):
+        # Add the compiler version to the library version so that pip sees it as a distinct version.
+        compiler_version_str = ".".join(
+            amulet_compiler_version.__version__.split(".")[3:]
+        )
+        if compiler_version_str:
+            version = Version(version_str)
+            if (
+                version.epoch != 0
+                or version.is_devrelease
+                or version.is_postrelease
+            ):
+                raise RuntimeError(f"Unsupported version format. {version_str}")
+            major, minor, patch, fix, *_ = version.release + (0, 0, 0, 0)
+            pre = "".join(map(str, version.pre)) if version.is_prerelease else ""
+            local = f"+{version.local}" if version.local else ""
+            version_str = (
+                f"{major}.{minor}.{patch}.{fix}.{compiler_version_str}{pre}{local}"
+            )
+
+    return version_str
+
+
 setup(
-    version=versioneer.get_version(),
+    version=_get_version(),
     cmdclass=cmdclass,
     ext_modules=[Extension("amulet.leveldb._leveldb", [])],
     install_requires=dependencies,
-    **setup_args,
 )

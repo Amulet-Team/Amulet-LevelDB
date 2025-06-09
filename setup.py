@@ -3,6 +3,8 @@ import subprocess
 import sys
 import typing
 from pathlib import Path
+import platform
+import datetime
 
 from setuptools import setup, Extension, Command
 from setuptools.command.build_ext import build_ext
@@ -11,14 +13,19 @@ from packaging.version import Version
 import versioneer
 
 import requirements
-import amulet_compiler_version
+
+
+if (
+    os.environ.get("AMULET_FREEZE_COMPILER", None)
+    and sys.platform == "darwin"
+    and platform.machine() != "arm64"
+):
+    raise Exception("The MacOS frozen build must be created on arm64")
 
 
 def fix_path(path: str | os.PathLike[typing.AnyStr]) -> str:
     return os.path.realpath(path).replace(os.sep, "/")
 
-
-dependencies = requirements.get_runtime_dependencies()
 
 cmdclass: dict[str, type[Command]] = versioneer.get_cmdclass()
 
@@ -45,6 +52,9 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
             else:
                 platform_args.extend(["-A", "Win32"])
             platform_args.extend(["-T", "v143"])
+        elif sys.platform == "darwin":
+            if platform.machine() == "arm64":
+                platform_args.append("-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64")
 
         if subprocess.run(["cmake", "--version"]).returncode:
             raise RuntimeError("Could not find cmake")
@@ -80,24 +90,27 @@ def _get_version() -> str:
     version_str: str = versioneer.get_version()
 
     if os.environ.get("AMULET_FREEZE_COMPILER", None):
-        # Add the compiler version to the library version so that pip sees it as a distinct version.
-        compiler_version_str = ".".join(
-            amulet_compiler_version.__version__.split(".")[3:]
-        )
-        if compiler_version_str:
-            version = Version(version_str)
-            if (
-                version.epoch != 0
-                or version.is_devrelease
-                or version.is_postrelease
-            ):
-                raise RuntimeError(f"Unsupported version format. {version_str}")
-            major, minor, patch, fix, *_ = version.release + (0, 0, 0, 0)
-            pre = "".join(map(str, version.pre)) if version.is_prerelease else ""
-            local = f"+{version.local}" if version.local else ""
-            version_str = (
-                f"{major}.{minor}.{patch}.{fix}.{compiler_version_str}{pre}{local}"
-            )
+        date_format = "%y%m%d%H%M%S"
+        try:
+            with open("build/timestamp.txt", "r") as f:
+                timestamp = datetime.datetime.strptime(f.read(), date_format)
+            print("using cached timestamp")
+        except Exception:
+            timestamp = datetime.datetime(1, 1, 1)
+        if datetime.timedelta(minutes=10) < datetime.datetime.now() - timestamp:
+            print("get timestamp")
+            timestamp = datetime.datetime.now()
+            os.makedirs("build", exist_ok=True)
+            with open("build/timestamp.txt", "w") as f:
+                f.write(timestamp.strftime(date_format))
+
+        version = Version(version_str)
+        epoch = f"{version.epoch}!" if version.epoch else ""
+        release = ".".join(map(str, version.release))
+        pre = "".join(map(str, version.pre)) if version.is_prerelease else ""
+        post = f".post{timestamp.strftime(date_format)}"
+        local = f"+{version.local}" if version.local else ""
+        version_str = f"{epoch}{release}{pre}{post}{local}"
 
     return version_str
 
@@ -106,5 +119,5 @@ setup(
     version=_get_version(),
     cmdclass=cmdclass,
     ext_modules=[Extension("amulet.leveldb._leveldb", [])],
-    install_requires=dependencies,
+    install_requires=requirements.get_runtime_dependencies(),
 )

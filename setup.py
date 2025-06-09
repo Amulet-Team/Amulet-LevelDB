@@ -18,8 +18,6 @@ def fix_path(path: str | os.PathLike[typing.AnyStr]) -> str:
     return os.path.realpath(path).replace(os.sep, "/")
 
 
-dependencies = requirements.get_runtime_dependencies()
-
 cmdclass: dict[str, type[Command]] = versioneer.get_cmdclass()
 
 
@@ -109,5 +107,5 @@ setup(
     version=_get_version(),
     cmdclass=cmdclass,
     ext_modules=[Extension("amulet.leveldb._leveldb", [])],
-    install_requires=dependencies,
+    install_requires=requirements.get_runtime_dependencies(),
 )

@@ -296,7 +296,7 @@ public:
 
 } // namespace
 
-static void init_module(py::module m)
+void init_module(py::module m)
 {
     pyext::init_compiler_config(m);
 

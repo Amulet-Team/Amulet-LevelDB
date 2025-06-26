@@ -38,7 +38,7 @@ def main() -> None:
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-Dpybind11_DIR={fix_path(pybind11.get_cmake_dir())}",
             f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
-            f"-Dleveldb_mcpe_DIR={fix_path(amulet.leveldb.__path__[0])}",
+            f"-Damulet_leveldb_DIR={fix_path(amulet.leveldb.__path__[0])}",
             f"-DCMAKE_INSTALL_PREFIX=install",
             "-B",
             "build",

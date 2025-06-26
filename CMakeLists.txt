@@ -37,7 +37,7 @@ set(ZLIB_LIBRARY ${INSTALL_LIB_DIR})
 find_package(ZLIB REQUIRED)
 target_compile_definitions(zlibstatic PUBLIC ZLIB_CONST)
 
-# Add pybind11
+# Find libraries
 find_package(pybind11 CONFIG REQUIRED)
 find_package(amulet_pybind11_extensions CONFIG REQUIRED)
 
@@ -49,8 +49,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(leveldb_mcpe)
 
+# Find C++ files
+file(REAL_PATH src SOURCE_PATH)
+file(GLOB_RECURSE EXTENSION_SOURCES LIST_DIRECTORIES false ${SOURCE_PATH}/amulet/*.py.cpp)
+file(GLOB_RECURSE EXTENSION_HEADERS LIST_DIRECTORIES false ${SOURCE_PATH}/amulet/*.py.hpp)
+
 # Add python extension
-pybind11_add_module(_leveldb src/amulet/leveldb/__init__leveldb.py.cpp)
+pybind11_add_module(_leveldb)
+target_link_libraries(_leveldb PRIVATE amulet_pybind11_extensions)
+target_link_libraries(_leveldb PRIVATE leveldb_mcpe)
 target_compile_definitions(_leveldb PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 target_compile_definitions(_leveldb PRIVATE PYBIND11_VERSION="${pybind11_VERSION}")
 target_compile_definitions(_leveldb PRIVATE COMPILER_ID="${CMAKE_CXX_COMPILER_ID}")
@@ -60,9 +67,14 @@ if (WIN32)
 else()
     target_compile_definitions(_leveldb PRIVATE "DLLX=")
 endif()
-target_link_libraries( _leveldb PRIVATE leveldb_mcpe )
-target_link_libraries( _leveldb PRIVATE amulet_pybind11_extensions )
 target_include_directories(_leveldb PRIVATE "${amulet_leveldb_DIR}/include")
+target_sources(_leveldb PRIVATE ${EXTENSION_SOURCES} ${EXTENSION_HEADERS})
+foreach(FILE ${EXTENSION_SOURCES} ${EXTENSION_HEADERS})
+    file(RELATIVE_PATH REL_PATH ${SOURCE_PATH} ${FILE})
+    get_filename_component(GROUP ${REL_PATH} DIRECTORY)
+    string(REPLACE "/" "\\" GROUP ${GROUP})
+    source_group(${GROUP} FILES ${FILE})
+endforeach()
 
 if(NOT DEFINED AMULET_LEVELDB_EXT_DIR)
     set(AMULET_LEVELDB_EXT_DIR ${amulet_leveldb_DIR})
@@ -75,3 +87,7 @@ INSTALL (
     DIRECTORY ${leveldb_mcpe_SOURCE_DIR}/include/
     DESTINATION ${amulet_leveldb_DIR}/include
 )
+
+if (DEFINED BUILD_AMULET_LEVELDB_TESTS)
+    add_subdirectory(tests)
+endif()

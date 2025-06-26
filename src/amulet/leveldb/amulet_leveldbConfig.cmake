@@ -2,7 +2,6 @@ if (NOT TARGET leveldb_mcpe)
     message(STATUS "Finding leveldb_mcpe")
 
     set(leveldb_mcpe_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include")
-    message(STATUS "leveldb_mcpe_INCLUDE_DIR: ${leveldb_mcpe_INCLUDE_DIR}")
     find_library(leveldb_mcpe_LIBRARY NAMES leveldb_mcpe PATHS "${CMAKE_CURRENT_LIST_DIR}")
     message(STATUS "leveldb_mcpe_LIBRARY: ${leveldb_mcpe_LIBRARY}")
 

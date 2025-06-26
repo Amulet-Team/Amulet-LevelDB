@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Unittests
+name: Stylecheck
 
 on:
   push:
@@ -13,18 +13,8 @@ on:
   pull_request:
 
 jobs:
-  unittests:
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ '3.11', '3.12' ]
-        os: [ macos-latest, windows-latest, ubuntu-latest ]
-
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    defaults:
-      run:
-        shell: bash
+  stylecheck:
+    runs-on: ubuntu-latest
 
     steps:
     - name: Clone
@@ -33,12 +23,13 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.12
 
-    - name: Install
+    - name: Install dependencies
       run: |
-        pip install -v .[dev]
-        python tools/compile_tests.py
+        python -m pip install --upgrade pip
+        pip install black
 
-    - name: Test with unittest
-      run: python -m unittest discover -v -s tests
+    - name: run stylecheck
+      run: |
+        python -m black --check --diff .

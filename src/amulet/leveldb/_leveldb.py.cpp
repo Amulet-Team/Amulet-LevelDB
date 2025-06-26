@@ -15,6 +15,7 @@
 #include <leveldb/write_batch.h>
 #include <leveldb/zlib_compressor.h>
 
+#include <amulet/pybind11_extensions/compatibility.hpp>
 #include <amulet/pybind11_extensions/iterator.hpp>
 
 #include <amulet/leveldb.hpp>
@@ -295,13 +296,9 @@ public:
 
 } // namespace
 
-static void init_module(py::module m)
+void init_module(py::module m)
 {
-    py::dict compiler_config;
-    compiler_config["pybind11_version"] = PYBIND11_VERSION;
-    compiler_config["compiler_id"] = COMPILER_ID;
-    compiler_config["compiler_version"] = COMPILER_VERSION;
-    m.attr("compiler_config") = compiler_config;
+    pyext::init_compiler_config(m);
 
     py::register_local_exception<LevelDBException>(m, "LevelDBException");
     py::register_local_exception<LevelDBEncrypted>(m, "LevelDBEncrypted");

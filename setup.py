@@ -1,19 +1,19 @@
 import os
 import subprocess
 import sys
-import typing
 from pathlib import Path
 import platform
 import datetime
+from tempfile import TemporaryDirectory
 
 from setuptools import setup, Extension, Command
 from setuptools.command.build_ext import build_ext
 
 from packaging.version import Version
+
 import versioneer
 
 import requirements
-
 
 if (
     os.environ.get("AMULET_FREEZE_COMPILER", None)
@@ -23,7 +23,7 @@ if (
     raise Exception("The MacOS frozen build must be created on arm64")
 
 
-def fix_path(path: str | os.PathLike[typing.AnyStr]) -> str:
+def fix_path(path: str) -> str:
     return os.path.realpath(path).replace(os.sep, "/")
 
 
@@ -58,29 +58,30 @@ class CMakeBuild(cmdclass.get("build_ext", build_ext)):
 
         if subprocess.run(["cmake", "--version"]).returncode:
             raise RuntimeError("Could not find cmake")
-        if subprocess.run(
-            [
-                "cmake",
-                *platform_args,
-                f"-DPYTHON_EXECUTABLE={sys.executable}",
-                f"-Dpybind11_DIR={pybind11.get_cmake_dir().replace(os.sep, '/')}",
-                f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
-                f"-Damulet_leveldb_DIR={fix_path(leveldb_src_dir)}",
-                f"-DAMULET_LEVELDB_EXT_DIR={fix_path(ext_dir)}",
-                f"-DCMAKE_INSTALL_PREFIX=install",
-                "-B",
-                "build",
-            ]
-        ).returncode:
-            raise RuntimeError("Error configuring amulet_leveldb")
-        if subprocess.run(
-            ["cmake", "--build", "build", "--config", "Release"]
-        ).returncode:
-            raise RuntimeError("Error building amulet_leveldb")
-        if subprocess.run(
-            ["cmake", "--install", "build", "--config", "Release"]
-        ).returncode:
-            raise RuntimeError("Error installing amulet_leveldb")
+        with TemporaryDirectory() as tempdir:
+            if subprocess.run(
+                [
+                    "cmake",
+                    *platform_args,
+                    f"-DPYTHON_EXECUTABLE={sys.executable}",
+                    f"-Dpybind11_DIR={fix_path(pybind11.get_cmake_dir())}",
+                    f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
+                    f"-Damulet_leveldb_DIR={fix_path(leveldb_src_dir)}",
+                    f"-DAMULET_LEVELDB_EXT_DIR={fix_path(ext_dir)}",
+                    f"-DCMAKE_INSTALL_PREFIX=install",
+                    "-B",
+                    tempdir,
+                ]
+            ).returncode:
+                raise RuntimeError("Error configuring amulet-leveldb")
+            if subprocess.run(
+                ["cmake", "--build", tempdir, "--config", "Release"]
+            ).returncode:
+                raise RuntimeError("Error building amulet-leveldb")
+            if subprocess.run(
+                ["cmake", "--install", tempdir, "--config", "Release"]
+            ).returncode:
+                raise RuntimeError("Error installing amulet-leveldb")
 
 
 cmdclass["build_ext"] = CMakeBuild
@@ -94,11 +95,9 @@ def _get_version() -> str:
         try:
             with open("build/timestamp.txt", "r") as f:
                 timestamp = datetime.datetime.strptime(f.read(), date_format)
-            print("using cached timestamp")
         except Exception:
             timestamp = datetime.datetime(1, 1, 1)
         if datetime.timedelta(minutes=10) < datetime.datetime.now() - timestamp:
-            print("get timestamp")
             timestamp = datetime.datetime.now()
             os.makedirs("build", exist_ok=True)
             with open("build/timestamp.txt", "w") as f:
@@ -118,6 +117,7 @@ def _get_version() -> str:
 setup(
     version=_get_version(),
     cmdclass=cmdclass,
-    ext_modules=[Extension("amulet.leveldb._leveldb", [])],
+    ext_modules=[Extension("amulet.leveldb._leveldb", [])]
+    * (not os.environ.get("AMULET_SKIP_COMPILE", None)),
     install_requires=requirements.get_runtime_dependencies(),
 )

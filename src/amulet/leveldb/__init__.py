@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 import collections.abc
+import logging as _logging
 
 from . import _version
 
@@ -152,6 +153,9 @@ if TYPE_CHECKING:
 
 
 __version__ = _version.get_versions()["version"]
+
+# init a default logger
+_logging.basicConfig(level=_logging.INFO, format="%(levelname)s - %(message)s")
 
 
 def _init() -> None:

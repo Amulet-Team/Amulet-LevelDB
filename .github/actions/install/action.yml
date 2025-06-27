@@ -89,7 +89,9 @@ runs:
       if: steps.install.outcome == 'failure'
       shell: bash
       run: |
-        python -m pip install "${{ github.action_path }}"/../../../dist/amulet_leveldb-*.whl
+        cache_dir=$(python -m pip cache dir)
+        rm -rf "$cache_dir"/http*
+        python -m pip install --only-binary amulet-leveldb amulet-compiler-version${{ inputs.compiler-specifier }} pybind11${{ inputs.pybind11-specifier }} amulet-pybind11-extensions${{ inputs.pybind11-extensions-specifier }} amulet-leveldb${{ inputs.leveldb-specifier }}
 
     - name: Get __version__
       id: get-version

@@ -164,11 +164,11 @@ def _init() -> None:
     import ctypes
 
     if sys.platform == "win32":
-        lib_path = os.path.join(os.path.dirname(__file__), "leveldb_mcpe.dll")
+        lib_path = os.path.join(os.path.dirname(__file__), "leveldb.dll")
     elif sys.platform == "darwin":
-        lib_path = os.path.join(os.path.dirname(__file__), "libleveldb_mcpe.dylib")
+        lib_path = os.path.join(os.path.dirname(__file__), "libleveldb.dylib")
     elif sys.platform == "linux":
-        lib_path = os.path.join(os.path.dirname(__file__), "libleveldb_mcpe.so")
+        lib_path = os.path.join(os.path.dirname(__file__), "libleveldb.so")
     else:
         raise RuntimeError(f"Unsupported platform {sys.platform}")
 

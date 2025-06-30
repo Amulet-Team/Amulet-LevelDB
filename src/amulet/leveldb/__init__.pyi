@@ -1,10 +1,47 @@
 from __future__ import annotations
 
 import collections as collections
+import typing
 
 from . import _leveldb, _version
 
 __all__: list = ["LevelDB", "LevelDBEncrypted", "LevelDBException", "LevelDBIterator"]
+
+class CompressionType:
+    """
+    Members:
+
+      NoCompression : No compression.
+
+      ZstdCompression : Zstd compression.
+
+      ZlibRawCompression : Zlib raw compression.
+    """
+
+    NoCompression: typing.ClassVar[
+        CompressionType
+    ]  # value = amulet.leveldb.CompressionType.NoCompression
+    ZlibRawCompression: typing.ClassVar[
+        CompressionType
+    ]  # value = amulet.leveldb.CompressionType.ZlibRawCompression
+    ZstdCompression: typing.ClassVar[
+        CompressionType
+    ]  # value = amulet.leveldb.CompressionType.ZstdCompression
+    __members__: typing.ClassVar[
+        dict[str, CompressionType]
+    ]  # value = {'NoCompression': amulet.leveldb.CompressionType.NoCompression, 'ZstdCompression': amulet.leveldb.CompressionType.ZstdCompression, 'ZlibRawCompression': amulet.leveldb.CompressionType.ZlibRawCompression}
+    def __eq__(self, other: typing.Any) -> bool: ...
+    def __hash__(self) -> int: ...
+    def __index__(self) -> int: ...
+    def __init__(self, value: int) -> None: ...
+    def __int__(self) -> int: ...
+    def __ne__(self, other: typing.Any) -> bool: ...
+    def __repr__(self) -> str: ...
+    def __str__(self) -> str: ...
+    @property
+    def name(self) -> str: ...
+    @property
+    def value(self) -> int: ...
 
 class LevelDB:
     """
@@ -14,7 +51,12 @@ class LevelDB:
     def __contains__(self, key: bytes) -> bool: ...
     def __delitem__(self, key: bytes) -> None: ...
     def __getitem__(self, key: bytes) -> bytes: ...
-    def __init__(self, path: str, create_if_missing: bool = False) -> None:
+    def __init__(
+        self,
+        path: str,
+        create_if_missing: bool = False,
+        compression_type: CompressionType = ...,
+    ) -> None:
         """
         Construct a new :class :`LevelDB` instance from the database at the given path.
 
@@ -22,6 +64,7 @@ class LevelDB:
 
         :param path: The path to the database directory.
         :param create_if_missing: If True a new database will be created if one does not exist at the given path.
+        :param compression_type: The compression type to use when writing data to the database. Defaults to zlib raw.
         :raises: LevelDBException if create_if_missing is False and the db does not exist.
         """
 

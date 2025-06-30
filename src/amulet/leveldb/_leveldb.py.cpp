@@ -395,6 +395,10 @@ void init_module(py::module m)
         leveldb::CompressionType::kNoCompression,
         "No compression.");
     CompressionType.value(
+        "SnappyCompression",
+        leveldb::CompressionType::kSnappyCompression,
+        "Snappy compression.");
+    CompressionType.value(
         "ZstdCompression",
         leveldb::CompressionType::kZstdCompression,
         "Zstd compression.");

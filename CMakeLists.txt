@@ -38,7 +38,7 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
   leveldb
   GIT_REPOSITORY https://github.com/Amulet-Team/leveldb.git
-  GIT_TAG        343d319e34d5e024faf37baa0d3c27f799b2a90e
+  GIT_TAG        1352243bb27d287b27be94f7591218dddb3ef900
 )
 FetchContent_MakeAvailable(leveldb)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)

@@ -23,20 +23,6 @@ endif()
 
 include(FetchContent)
 
-# Add zlib
-set(ZLIB_BUILD_EXAMPLES OFF)
-FetchContent_Declare(
-  zlib
-  GIT_REPOSITORY https://github.com/madler/zlib.git
-  GIT_TAG        51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf
-)
-FetchContent_MakeAvailable(zlib)
-set(ZLIB_ROOT ${zlib_SOURCE_DIR})
-set(ZLIB_USE_STATIC_LIBS ON)
-set(ZLIB_LIBRARY ${INSTALL_LIB_DIR})
-find_package(ZLIB REQUIRED)
-target_compile_definitions(zlibstatic PUBLIC ZLIB_CONST)
-
 # Find libraries
 find_package(pybind11 CONFIG REQUIRED)
 find_package(amulet_pybind11_extensions CONFIG REQUIRED)
@@ -52,7 +38,7 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
   leveldb
   GIT_REPOSITORY https://github.com/Amulet-Team/leveldb.git
-  GIT_TAG        4b979c039964b6650c75e78f63667b711e1f4e84
+  GIT_TAG        343d319e34d5e024faf37baa0d3c27f799b2a90e
 )
 FetchContent_MakeAvailable(leveldb)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)

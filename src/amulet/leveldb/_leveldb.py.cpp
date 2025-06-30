@@ -12,8 +12,8 @@
 #include <leveldb/decompress_allocator.h>
 #include <leveldb/env.h>
 #include <leveldb/filter_policy.h>
+#include <leveldb/options.h>
 #include <leveldb/write_batch.h>
-#include <leveldb/zlib_compressor.h>
 
 #include <amulet/pybind11_extensions/compatibility.hpp>
 #include <amulet/pybind11_extensions/iterator.hpp>
@@ -105,14 +105,13 @@ public:
 class LevelDBOptions : public Amulet::LevelDBOptions {
 public:
     NullLogger logger;
-    leveldb::ZlibCompressorRaw zlib_compressor_raw;
-    leveldb::ZlibCompressor zlib_compressor;
     leveldb::DecompressAllocator decompress_allocator;
 };
 
 std::unique_ptr<Amulet::LevelDB> open_leveldb(
     std::string path_str,
-    bool create_if_missing = false)
+    bool create_if_missing = false,
+    leveldb::CompressionType compression_type = leveldb::kZlibRawCompression)
 {
     // Expand dots and symbolic links
     auto path = std::filesystem::absolute(path_str);
@@ -135,20 +134,18 @@ std::unique_ptr<Amulet::LevelDB> open_leveldb(
     options->options.block_cache = leveldb::NewLRUCache(40 * 1024 * 1024);
     options->options.write_buffer_size = 4 * 1024 * 1024;
     options->options.info_log = &options->logger;
-    options->options.compressors[0] = &options->zlib_compressor_raw;
-    options->options.compressors[1] = &options->zlib_compressor;
+    options->options.compression = compression_type;
     options->options.block_size = 163840;
 
     options->read_options.decompress_allocator = &options->decompress_allocator;
 
     leveldb::DB* _db = NULL;
     auto status = leveldb::DB::Open(options->options, path.string(), &_db);
-    switch (status.code()) {
-    case leveldb::Status::kOk:
+    if (status.ok()) {
         return std::make_unique<Amulet::LevelDB>(
             std::unique_ptr<leveldb::DB>(_db),
             std::move(options));
-    case leveldb::Status::kCorruption:
+    } else if (status.IsCorruption()) {
         leveldb::RepairDB(path.string(), options->options);
         {
             auto status2 = leveldb::DB::Open(options->options, path.string(), &_db);
@@ -159,7 +156,7 @@ std::unique_ptr<Amulet::LevelDB> open_leveldb(
             }
         }
         throw LevelDBException("Could not recover corrupted database. " + status.ToString());
-    case leveldb::Status::kNotSupported:
+    } else if (status.IsNotSupportedError()) {
         if (status.ToString().ends_with("Marketplace worlds are not supported.")) {
             throw LevelDBEncrypted("Marketplace worlds are not supported.");
         }
@@ -299,6 +296,7 @@ public:
 void init_module(py::module m)
 {
     pyext::init_compiler_config(m);
+    std::string module_name = m.attr("__name__").cast<std::string>();
 
     py::register_local_exception<LevelDBException>(m, "LevelDBException");
     py::register_local_exception<LevelDBEncrypted>(m, "LevelDBEncrypted");
@@ -391,12 +389,37 @@ void init_module(py::module m)
             "Get the value of the current entry in the database.\n"
             ":raises: runtime_error if iterator is not valid."));
 
+    py::enum_<leveldb::CompressionType> CompressionType(m, "CompressionType");
+    CompressionType.value(
+        "NoCompression",
+        leveldb::CompressionType::kNoCompression,
+        "No compression.");
+    CompressionType.value(
+        "SnappyCompression",
+        leveldb::CompressionType::kSnappyCompression,
+        "Snappy compression.");
+    CompressionType.value(
+        "ZstdCompression",
+        leveldb::CompressionType::kZstdCompression,
+        "Zstd compression.");
+    CompressionType.value(
+        "ZlibRawCompression",
+        leveldb::CompressionType::kZlibRawCompression,
+        "Zlib raw compression.");
+    CompressionType.attr("__repr__") = py::cpp_function(
+        [module_name, CompressionType](const py::object& arg) -> py::str {
+            return py::str("{}.{}").format(module_name, CompressionType.attr("__str__")(arg));
+        },
+        py::name("__repr__"),
+        py::is_method(CompressionType));
+
     py::class_<Amulet::LevelDB> LevelDB(m, "LevelDB",
         "A LevelDB database");
     LevelDB.def(
         py::init(&open_leveldb),
         py::arg("path"),
         py::arg("create_if_missing") = false,
+        py::arg("compression_type") = leveldb::kZlibRawCompression,
         py::doc(
             "Construct a new :class :`LevelDB` instance from the database at the given path.\n"
             "\n"
@@ -404,6 +427,7 @@ void init_module(py::module m)
             "\n"
             ":param path: The path to the database directory.\n"
             ":param create_if_missing: If True a new database will be created if one does not exist at the given path.\n"
+            ":param compression_type: The compression type to use when writing data to the database. Defaults to zlib raw.\n"
             ":raises: LevelDBException if create_if_missing is False and the db does not exist."));
 
     LevelDB.def(
@@ -476,12 +500,11 @@ void init_module(py::module m)
             }
             status = self->Get(self.get_read_options(), key, &value);
         }
-        switch (status.code()) {
-        case leveldb::Status::kOk:
+        if (status.ok()) {
             return py::bytes(value);
-        case leveldb::Status::kNotFound:
+        } else if (status.IsNotFound()) {
             throw py::key_error(key.ToString());
-        default:
+        } else {
             throw LevelDBException(status.ToString());
         }
     };

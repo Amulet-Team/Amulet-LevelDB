@@ -23,31 +23,26 @@ endif()
 
 include(FetchContent)
 
-# Add zlib
-set(ZLIB_BUILD_EXAMPLES OFF)
-FetchContent_Declare(
-  zlib
-  GIT_REPOSITORY https://github.com/madler/zlib.git
-  GIT_TAG        51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf
-)
-FetchContent_MakeAvailable(zlib)
-set(ZLIB_ROOT ${zlib_SOURCE_DIR})
-set(ZLIB_USE_STATIC_LIBS ON)
-set(ZLIB_LIBRARY ${INSTALL_LIB_DIR})
-find_package(ZLIB REQUIRED)
-target_compile_definitions(zlibstatic PUBLIC ZLIB_CONST)
-
 # Find libraries
 find_package(pybind11 CONFIG REQUIRED)
 find_package(amulet_pybind11_extensions CONFIG REQUIRED)
 
 # Add implementation
+set(LEVELDB_BUILD_UTILS OFF CACHE BOOL "" FORCE)
+set(LEVELDB_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+set(LEVELDB_INSTALL OFF CACHE BOOL "" FORCE)
+set(LEVELDB_DISABLE_EXCEPTIONS OFF CACHE BOOL "" FORCE)
+set(LEVELDB_DISABLE_RTTI OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
-  leveldb_mcpe
-  GIT_REPOSITORY https://github.com/Amulet-Team/leveldb-mcpe.git
-  GIT_TAG        4846fc72c7eda860b1bcf6efc58920a9273da928
+  leveldb
+  GIT_REPOSITORY https://github.com/Amulet-Team/leveldb.git
+  GIT_TAG        1352243bb27d287b27be94f7591218dddb3ef900
 )
-FetchContent_MakeAvailable(leveldb_mcpe)
+FetchContent_MakeAvailable(leveldb)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
 
 # Find C++ files
 file(REAL_PATH src SOURCE_PATH)
@@ -57,16 +52,11 @@ file(GLOB_RECURSE EXTENSION_HEADERS LIST_DIRECTORIES false ${SOURCE_PATH}/amulet
 # Add python extension
 pybind11_add_module(_leveldb)
 target_link_libraries(_leveldb PRIVATE amulet_pybind11_extensions)
-target_link_libraries(_leveldb PRIVATE leveldb_mcpe)
+target_link_libraries(_leveldb PRIVATE leveldb)
 target_compile_definitions(_leveldb PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 target_compile_definitions(_leveldb PRIVATE PYBIND11_VERSION="${pybind11_VERSION}")
 target_compile_definitions(_leveldb PRIVATE COMPILER_ID="${CMAKE_CXX_COMPILER_ID}")
 target_compile_definitions(_leveldb PRIVATE COMPILER_VERSION="${CMAKE_CXX_COMPILER_VERSION}")
-if (WIN32)
-    target_compile_definitions(_leveldb PRIVATE "DLLX=__declspec(dllimport)")
-else()
-    target_compile_definitions(_leveldb PRIVATE "DLLX=")
-endif()
 target_include_directories(_leveldb PRIVATE "${amulet_leveldb_DIR}/include")
 target_sources(_leveldb PRIVATE ${EXTENSION_SOURCES} ${EXTENSION_HEADERS})
 foreach(FILE ${EXTENSION_SOURCES} ${EXTENSION_HEADERS})
@@ -81,10 +71,10 @@ if(NOT DEFINED AMULET_LEVELDB_EXT_DIR)
 endif()
 
 # Install
-install(TARGETS leveldb_mcpe DESTINATION ${amulet_leveldb_DIR})
+install(TARGETS leveldb DESTINATION ${amulet_leveldb_DIR})
 install(TARGETS _leveldb DESTINATION ${AMULET_LEVELDB_EXT_DIR})
 INSTALL (
-    DIRECTORY ${leveldb_mcpe_SOURCE_DIR}/include/
+    DIRECTORY ${leveldb_SOURCE_DIR}/include/
     DESTINATION ${amulet_leveldb_DIR}/include
 )
 

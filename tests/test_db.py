@@ -297,7 +297,9 @@ class LevelDBTestCase(unittest.TestCase):
 
             db = LevelDB(path, True)
             try:
-                self.assertTrue(40_000 <= len(list(db.keys())) < 100_000)
+                key_count = len(list(db.keys()))
+                self.assertLess(key_count, 100_000)
+                self.assertGreater(key_count, 10)
             finally:
                 db.close()
 

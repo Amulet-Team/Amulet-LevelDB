@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.13)
 
 project(amulet_leveldb LANGUAGES CXX)
 
+set(amulet_leveldb_DIR ${CMAKE_CURRENT_LIST_DIR}/src/amulet/leveldb CACHE PATH "")
+
 # Set C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -21,13 +23,16 @@ if (MSVC)
     add_definitions("/MP")
 endif()
 
-include(FetchContent)
-
 # Find libraries
-find_package(pybind11 CONFIG REQUIRED)
-find_package(amulet_pybind11_extensions CONFIG REQUIRED)
+if (NOT TARGET pybind11::module)
+    find_package(pybind11 CONFIG REQUIRED)
+endif()
+if (NOT TARGET amulet_pybind11_extensions)
+    find_package(amulet_pybind11_extensions CONFIG REQUIRED)
+endif()
 
 # Add implementation
+include(FetchContent)
 set(LEVELDB_BUILD_UTILS OFF CACHE BOOL "" FORCE)
 set(LEVELDB_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
@@ -42,6 +47,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(leveldb)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+target_include_directories(leveldb PUBLIC "${amulet_leveldb_DIR}/include")
 
 
 # Find C++ files

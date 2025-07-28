@@ -13,6 +13,8 @@ class CompressionType:
 
       NoCompression : No compression.
 
+      SnappyCompression : Snappy compression.
+
       ZstdCompression : Zstd compression.
 
       ZlibRawCompression : Zlib raw compression.
@@ -21,6 +23,9 @@ class CompressionType:
     NoCompression: typing.ClassVar[
         CompressionType
     ]  # value = amulet.leveldb.CompressionType.NoCompression
+    SnappyCompression: typing.ClassVar[
+        CompressionType
+    ]  # value = amulet.leveldb.CompressionType.SnappyCompression
     ZlibRawCompression: typing.ClassVar[
         CompressionType
     ]  # value = amulet.leveldb.CompressionType.ZlibRawCompression
@@ -29,11 +34,11 @@ class CompressionType:
     ]  # value = amulet.leveldb.CompressionType.ZstdCompression
     __members__: typing.ClassVar[
         dict[str, CompressionType]
-    ]  # value = {'NoCompression': amulet.leveldb.CompressionType.NoCompression, 'ZstdCompression': amulet.leveldb.CompressionType.ZstdCompression, 'ZlibRawCompression': amulet.leveldb.CompressionType.ZlibRawCompression}
+    ]  # value = {'NoCompression': amulet.leveldb.CompressionType.NoCompression, 'SnappyCompression': amulet.leveldb.CompressionType.SnappyCompression, 'ZstdCompression': amulet.leveldb.CompressionType.ZstdCompression, 'ZlibRawCompression': amulet.leveldb.CompressionType.ZlibRawCompression}
     def __eq__(self, other: typing.Any) -> bool: ...
     def __hash__(self) -> int: ...
     def __index__(self) -> int: ...
-    def __init__(self, value: int) -> None: ...
+    def __init__(self, value: typing.SupportsInt) -> None: ...
     def __int__(self) -> int: ...
     def __ne__(self, other: typing.Any) -> bool: ...
     def __repr__(self) -> str: ...

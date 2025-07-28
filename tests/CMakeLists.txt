@@ -18,13 +18,13 @@ else()
 endif()
 
 # Find dependencies
-if (NOT TARGET pybind11::modulepybind11::module)
+if (NOT TARGET pybind11::module)
     find_package(pybind11 CONFIG REQUIRED)
 endif()
-if (NOT TARGET amulet_pybind11_extensionspybind11::module)
+if (NOT TARGET amulet_pybind11_extensions)
     find_package(amulet_pybind11_extensions CONFIG REQUIRED)
 endif()
-if (NOT TARGET leveldbpybind11::module)
+if (NOT TARGET leveldb)
     find_package(amulet_leveldb CONFIG REQUIRED)
 endif()
 

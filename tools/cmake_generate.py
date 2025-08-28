@@ -38,7 +38,7 @@ def main():
             f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
             f"-Damulet_leveldb_DIR={fix_path(os.path.join(RootDir, 'src', 'amulet', 'leveldb'))}",
             f"-DCMAKE_INSTALL_PREFIX=install",
-            f"-DBUILD_AMULET_LEVELDB_TESTS=",
+            f"-DBUILD_AMULET_LEVELDB_TESTS=ON",
             "-B",
             "build",
         ]

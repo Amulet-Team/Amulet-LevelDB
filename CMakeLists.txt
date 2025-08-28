@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 project(amulet_leveldb LANGUAGES CXX)
 
 set(amulet_leveldb_DIR ${CMAKE_CURRENT_LIST_DIR}/src/amulet/leveldb CACHE PATH "")
+set(BUILD_AMULET_LEVELDB_TESTS OFF CACHE BOOL "Should tests be built?")
 
 # Set C++20
 set(CMAKE_CXX_STANDARD 20)
@@ -15,8 +16,10 @@ if (WIN32)
 	add_definitions(-D_WIN32_WINNT=0x0601)
 elseif(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
-else()
+elseif(UNIX)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+else()
+    message( FATAL_ERROR "Unsupported platform. Please submit a pull request to support this platform." )
 endif()
 
 if (MSVC)
@@ -84,6 +87,6 @@ INSTALL (
     DESTINATION ${amulet_leveldb_DIR}/include
 )
 
-if (DEFINED BUILD_AMULET_LEVELDB_TESTS)
+if (BUILD_AMULET_LEVELDB_TESTS)
     add_subdirectory(tests)
 endif()

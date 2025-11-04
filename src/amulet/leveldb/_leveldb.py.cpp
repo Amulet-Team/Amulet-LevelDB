@@ -301,7 +301,7 @@ void init_module(py::module m)
     py::register_local_exception<LevelDBException>(m, "LevelDBException");
     py::register_local_exception<LevelDBEncrypted>(m, "LevelDBEncrypted");
 
-    py::class_<Amulet::LevelDBIterator> LevelDBIterator(m, "LevelDBIterator");
+    py::classh<Amulet::LevelDBIterator> LevelDBIterator(m, "LevelDBIterator");
     LevelDBIterator.def(
         "valid",
         [](Amulet::LevelDBIterator& self) {
@@ -413,7 +413,7 @@ void init_module(py::module m)
         py::name("__repr__"),
         py::is_method(CompressionType));
 
-    py::class_<Amulet::LevelDB> LevelDB(m, "LevelDB",
+    py::classh<Amulet::LevelDB> LevelDB(m, "LevelDB",
         "A LevelDB database");
     LevelDB.def(
         py::init(&open_leveldb),

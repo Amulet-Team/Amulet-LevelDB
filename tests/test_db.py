@@ -7,6 +7,7 @@ import os
 import weakref
 import time
 from concurrent.futures import ThreadPoolExecutor
+from collections.abc import Iterable, Sequence
 
 from amulet.leveldb import LevelDB, LevelDBException
 
@@ -16,7 +17,7 @@ incr_db = {f"key{i}".encode("utf-8"): f"val{i}".encode("utf-8") for i in range(1
 full_db = {**incr_db, **num_db}
 
 
-def get_directory_size(path: str):
+def get_directory_size(path: str) -> int:
     return sum(
         (os.path.getsize(item.path) for item in os.scandir(path) if item.is_file())
     )
@@ -443,7 +444,7 @@ class LevelDBTestCase(unittest.TestCase):
             t2 = -time.time()
             db = LevelDB(path, True)
 
-            def add(values) -> None:
+            def add(values: Iterable[bytes]) -> None:
                 for v in values:
                     db.put(v, v)
 
@@ -469,7 +470,7 @@ class LevelDBTestCase(unittest.TestCase):
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
 
-            def add(values) -> None:
+            def add(values: Iterable[bytes]) -> None:
                 for v in values:
                     db.put(v, v)
 
@@ -502,7 +503,7 @@ class LevelDBTestCase(unittest.TestCase):
             m2 = {}
             t2 = -time.time()
 
-            def read(values) -> None:
+            def read(values: Sequence[bytes]) -> None:
                 it = db.create_iterator()
                 it.seek(values[0])
                 for _ in range(count):

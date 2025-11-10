@@ -2,7 +2,9 @@
 
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -84,6 +86,7 @@ private:
     // We need to destroy all iterators before closing the database.
     // During destruction of the iterator a callback will remove the pointer.
     std::set<LevelDBIterator*> iterators;
+    std::mutex iterators_mutex;
 
 public:
     LevelDB(
@@ -100,6 +103,7 @@ public:
     void close()
     {
         if (db) {
+            std::lock_guard lock(iterators_mutex);
             while (!iterators.empty()) {
                 // Destroy automatically removes the item from iterators.
                 (*iterators.begin())->destroy();
@@ -124,6 +128,11 @@ public:
         return db.get();
     }
 
+    leveldb::DB& operator*()
+    {
+        return *db;
+    }
+
     // Create an iterator that is automatically destroyed when the database is closed.
     // You may use raw iterators but you must ensure the database outlives the iterator.
     std::unique_ptr<LevelDBIterator> create_iterator()
@@ -131,6 +140,8 @@ public:
         if (!db) {
             throw std::runtime_error("The LevelDB database has been closed.");
         }
+
+        std::lock_guard lock(iterators_mutex);
 
         // Create the iterator
         auto iterator = std::make_unique<LevelDBIterator>(

@@ -291,6 +291,18 @@ public:
     }
 };
 
+static std::unique_ptr<Amulet::LevelDBIterator> get_start_iterator(Amulet::LevelDB& db)
+{
+    py::gil_scoped_release nogil;
+    if (!db) {
+        throw std::runtime_error("The LevelDB database has been closed.");
+    }
+    auto iterator_ptr = db.create_iterator();
+    auto& iterator = *iterator_ptr;
+    iterator->SeekToFirst();
+    return iterator_ptr;
+}
+
 } // namespace
 
 void init_module(py::module m)
@@ -301,7 +313,7 @@ void init_module(py::module m)
     py::register_local_exception<LevelDBException>(m, "LevelDBException");
     py::register_local_exception<LevelDBEncrypted>(m, "LevelDBEncrypted");
 
-    py::classh<Amulet::LevelDBIterator> LevelDBIterator(m, "LevelDBIterator");
+    py::classh<Amulet::LevelDBIterator> LevelDBIterator(m, "LevelDBIterator", py::release_gil_before_calling_cpp_dtor());
     LevelDBIterator.def(
         "valid",
         [](Amulet::LevelDBIterator& self) {
@@ -413,7 +425,7 @@ void init_module(py::module m)
         py::name("__repr__"),
         py::is_method(CompressionType));
 
-    py::classh<Amulet::LevelDB> LevelDB(m, "LevelDB",
+    py::classh<Amulet::LevelDB> LevelDB(m, "LevelDB", py::release_gil_before_calling_cpp_dtor(),
         "A LevelDB database");
     LevelDB.def(
         py::init(&open_leveldb),
@@ -442,16 +454,15 @@ void init_module(py::module m)
     LevelDB.def(
         "compact",
         [](Amulet::LevelDB& self) {
-            py::gil_scoped_release gil;
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
             self->CompactRange(nullptr, nullptr);
         },
-        py::doc("Remove deleted entries from the database to reduce its size."));
+        py::doc("Remove deleted entries from the database to reduce its size."),
+        py::call_guard<py::gil_scoped_release>());
 
     auto put = [](Amulet::LevelDB& self, leveldb::Slice key, leveldb::Slice value) {
-        py::gil_scoped_release gil;
         if (!self) {
             throw std::runtime_error("The LevelDB database has been closed.");
         }
@@ -460,13 +471,19 @@ void init_module(py::module m)
             throw LevelDBException(status.ToString());
         }
     };
-    LevelDB.def("put", put, py::arg("key"), py::arg("value"), py::doc("Set a value in the database."));
-    LevelDB.def("__setitem__", put, py::arg("key"), py::arg("value"));
+    LevelDB.def(
+        "put", put,
+        py::arg("key"), py::arg("value"),
+        py::doc("Set a value in the database."),
+        py::call_guard<py::gil_scoped_release>());
+    LevelDB.def(
+        "__setitem__", put,
+        py::arg("key"), py::arg("value"),
+        py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(
         "put_batch",
         [](Amulet::LevelDB& self, leveldb::WriteBatch batch) {
-            py::gil_scoped_release gil;
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
@@ -476,19 +493,20 @@ void init_module(py::module m)
             }
         },
         py::arg("batch"),
-        py::doc("Set a group of values in the database."));
+        py::doc("Set a group of values in the database."),
+        py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(
         "__contains__",
         [](Amulet::LevelDB& self, leveldb::Slice key) {
-            py::gil_scoped_release gil;
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
             std::string value;
             return self->Get(self.get_read_options(), key, &value).ok();
         },
-        py::arg("key"));
+        py::arg("key"),
+        py::call_guard<py::gil_scoped_release>());
 
     auto get = [](Amulet::LevelDB& self, leveldb::Slice key) {
         std::string value;
@@ -522,7 +540,6 @@ void init_module(py::module m)
     LevelDB.def("__getitem__", get, py::arg("key"));
 
     auto del = [](Amulet::LevelDB& self, leveldb::Slice key) {
-        py::gil_scoped_release gil;
         if (!self) {
             throw std::runtime_error("The LevelDB database has been closed.");
         }
@@ -538,13 +555,18 @@ void init_module(py::module m)
         py::doc(
             "Delete a key from the database.\n"
             "\n"
-            ":param key: The key to delete from the database."));
-    LevelDB.def("__delitem__", del, py::arg("key"));
+            ":param key: The key to delete from the database."),
+        py::call_guard<py::gil_scoped_release>());
+    LevelDB.def(
+        "__delitem__", del,
+        py::arg("key"),
+        py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(
         "create_iterator",
         &Amulet::LevelDB::create_iterator,
-        py::doc("Create a new leveldb Iterator."));
+        py::doc("Create a new leveldb Iterator."),
+        py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(
         "iterate",
@@ -555,7 +577,11 @@ void init_module(py::module m)
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
-            auto iterator_ptr = self.create_iterator();
+            std::unique_ptr<Amulet::LevelDBIterator> iterator_ptr;
+            {
+                py::gil_scoped_release nogil;
+                iterator_ptr = self.create_iterator();
+            }
             auto& iterator = *iterator_ptr;
             if (start) {
                 iterator->Seek(start->cast<std::string>());
@@ -582,50 +608,35 @@ void init_module(py::module m)
     LevelDB.def(
         "__iter__",
         [](Amulet::LevelDB& self) {
-            auto iterator_ptr = self.create_iterator();
-            auto& iterator = *iterator_ptr;
-            iterator->SeekToFirst();
             return pyext::make_iterator(
-                LevelDBKeysIterator(std::move(iterator_ptr)));
+                LevelDBKeysIterator(get_start_iterator(self)));
         });
     LevelDB.def(
         "keys",
         [](Amulet::LevelDB& self) {
-            auto iterator_ptr = self.create_iterator();
-            auto& iterator = *iterator_ptr;
-            iterator->SeekToFirst();
             return pyext::make_iterator(
-                LevelDBKeysIterator(std::move(iterator_ptr)));
+                LevelDBKeysIterator(get_start_iterator(self)));
         },
         py::doc("An iterable of all keys in the database."));
 
     LevelDB.def(
         "values",
         [](Amulet::LevelDB& self) {
-            auto iterator_ptr = self.create_iterator();
-            auto& iterator = *iterator_ptr;
-            iterator->SeekToFirst();
             return pyext::make_iterator(
-                LevelDBValuesIterator(std::move(iterator_ptr)));
+                LevelDBValuesIterator(get_start_iterator(self)));
         },
         py::doc("An iterable of all values in the database."));
 
     LevelDB.def(
         "items",
         [](Amulet::LevelDB& self) {
-            auto iterator_ptr = self.create_iterator();
-            auto& iterator = *iterator_ptr;
-            iterator->SeekToFirst();
             return pyext::make_iterator(
-                LevelDBItemsIterator(std::move(iterator_ptr)));
+                LevelDBItemsIterator(get_start_iterator(self)));
         },
         py::doc("An iterable of all items in the database."));
 }
 
 PYBIND11_MODULE(_leveldb, m)
 {
-    py::options options;
-    options.disable_function_signatures();
-    m.def("init", &init_module, py::doc("init(arg0: types.ModuleType) -> None"));
-    options.enable_function_signatures();
+    m.def("init", &init_module);
 }

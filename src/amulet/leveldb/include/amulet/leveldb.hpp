@@ -53,6 +53,7 @@ private:
     LevelDBImpl* _impl;
 
 public:
+    // Constructor
     LevelDB(
         std::unique_ptr<leveldb::DB> db,
         std::unique_ptr<LevelDBOptions> options);
@@ -65,10 +66,15 @@ public:
     LevelDB(LevelDB&&) = delete;
     LevelDB& operator=(LevelDB&&) = delete;
 
+    // Destructor
     ~LevelDB();
 
+    // Close the database and delete all iterators.
+    // This must only be called by the owner.
     void close();
 
+    // Is the database valid?
+    // If this returns false, all other calls will fail.
     operator bool();
 
     // Get the raw leveldb object.
@@ -79,8 +85,10 @@ public:
     // You may use raw iterators but you must ensure the database outlives the iterator.
     std::unique_ptr<LevelDBIterator> create_iterator();
 
+    // Get the read options for the database.
     const leveldb::ReadOptions& get_read_options();
 
+    // Get the write options for the database.
     const leveldb::WriteOptions& get_write_options();
 };
 

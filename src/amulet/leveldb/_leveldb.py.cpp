@@ -294,6 +294,9 @@ public:
 static std::unique_ptr<Amulet::LevelDBIterator> get_start_iterator(Amulet::LevelDB& db)
 {
     py::gil_scoped_release nogil;
+    if (!db) {
+        throw std::runtime_error("The LevelDB database has been closed.");
+    }
     auto iterator_ptr = db.create_iterator();
     auto& iterator = *iterator_ptr;
     iterator->SeekToFirst();

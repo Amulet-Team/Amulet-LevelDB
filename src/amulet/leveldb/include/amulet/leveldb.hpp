@@ -36,7 +36,8 @@ public:
 
     // Get the raw iterator.
     leveldb::Iterator* operator->();
-    leveldb::Iterator& it();
+    leveldb::Iterator& operator*();
+    leveldb::Iterator& get_iterator();
 };
 
 class LEVELDB_EXPORT LevelDBOptions {
@@ -80,6 +81,7 @@ public:
     // Get the raw leveldb object.
     leveldb::DB* operator->();
     leveldb::DB& operator*();
+    leveldb::DB& get_database();
 
     // Create an iterator that is automatically destroyed when the database is closed.
     // You may use raw iterators but you must ensure the database outlives the iterator.

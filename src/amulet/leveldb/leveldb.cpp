@@ -36,7 +36,11 @@ leveldb::Iterator* LevelDBIterator::operator->()
     return _it;
 }
 
-leveldb::Iterator& LevelDBIterator::it()
+leveldb::Iterator& LevelDBIterator::operator*() {
+    return *_it;
+}
+
+leveldb::Iterator& LevelDBIterator::get_iterator()
 {
     return *_it;
 }
@@ -116,6 +120,10 @@ leveldb::DB& LevelDB::operator*()
     return *_impl->db;
 }
 
+leveldb::DB& LevelDB::get_database() {
+    return *_impl->db;
+}
+
 // Create an iterator that is automatically destroyed when the database is closed.
 // You may use raw iterators but you must ensure the database outlives the iterator.
 std::unique_ptr<LevelDBIterator> LevelDBImpl::create_iterator()
@@ -140,7 +148,7 @@ std::unique_ptr<LevelDBIterator> LevelDBImpl::create_iterator()
     };
 
     // Register on destory callback
-    iterator->it().RegisterCleanup(
+    iterator->get_iterator().RegisterCleanup(
         reinterpret_cast<leveldb::Iterator::CleanupFunction>(remove_iterator),
         this, ptr);
 

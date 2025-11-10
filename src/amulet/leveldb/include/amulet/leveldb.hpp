@@ -19,23 +19,12 @@ namespace Amulet {
 class LevelDBIterator {
 private:
     std::unique_ptr<leveldb::Iterator> iterator;
-    std::vector<std::function<void()>> on_destroy;
 
     friend class LevelDB;
-    void register_on_destroy(std::function<void()> f)
-    {
-        on_destroy.push_back(f);
-    }
     void destroy()
     {
-        if (iterator) {
-            // Notify all callbacks that the iterator is about to be destroyed.
-            for (const auto& f : on_destroy) {
-                f();
-            }
-            // Destroy the iterator.
-            iterator.reset();
-        }
+        // Destroy the iterator.
+        iterator.reset();
     }
 
 public:
@@ -62,6 +51,11 @@ public:
     {
         return iterator.get();
     }
+
+    leveldb::Iterator& it()
+    {
+        return *iterator;
+    }
 };
 
 class LevelDBOptions {
@@ -86,7 +80,13 @@ private:
     // We need to destroy all iterators before closing the database.
     // During destruction of the iterator a callback will remove the pointer.
     std::set<LevelDBIterator*> iterators;
-    std::mutex iterators_mutex;
+    std::recursive_mutex iterators_mutex;
+
+    static void remove_iterator(LevelDB* self, LevelDBIterator* it)
+    {
+        std::lock_guard lock(self->iterators_mutex);
+        self->iterators.erase(it);
+    }
 
 public:
     LevelDB(
@@ -160,7 +160,9 @@ public:
         };
 
         // Register on destory callback
-        iterator->register_on_destroy(on_destroy);
+        iterator->it().RegisterCleanup(
+            reinterpret_cast<leveldb::Iterator::CleanupFunction>(remove_iterator),
+            this, ptr);
 
         // Return newly created iterator
         return iterator;

@@ -638,5 +638,5 @@ void init_module(py::module m)
 
 PYBIND11_MODULE(_leveldb, m)
 {
-    m.def("init", &init_module);
+    m.def("init", &init_module, py::arg("m"));
 }

@@ -51,6 +51,17 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(leveldb)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 target_include_directories(leveldb PUBLIC "${amulet_leveldb_DIR}/include")
+set_target_properties(crc32c PROPERTIES FOLDER "ThirdParty")
+if (TARGET crc32c_arm64)
+    set_target_properties(crc32c_arm64 PROPERTIES FOLDER "ThirdParty")
+endif()
+if (TARGET crc32c_sse42)
+    set_target_properties(crc32c_sse42 PROPERTIES FOLDER "ThirdParty")
+endif()
+set_target_properties(snappy PROPERTIES FOLDER "ThirdParty")
+set_target_properties(libzstd_static PROPERTIES FOLDER "ThirdParty")
+set_target_properties(zlibstatic PROPERTIES FOLDER "ThirdParty")
+set_target_properties(leveldb PROPERTIES FOLDER "CPP")
 
 
 # Find C++ files
@@ -63,6 +74,7 @@ target_sources(leveldb PRIVATE ${SOURCE_PATH}/amulet/leveldb/leveldb.cpp)
 
 # Add python extension
 pybind11_add_module(_leveldb)
+set_target_properties(_leveldb PROPERTIES FOLDER "Python")
 target_link_libraries(_leveldb PRIVATE amulet_pybind11_extensions)
 target_link_libraries(_leveldb PRIVATE leveldb)
 target_compile_definitions(_leveldb PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)

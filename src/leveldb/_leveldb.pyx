@@ -162,6 +162,19 @@ cdef inline bint _check_db(DB *db) except -1 nogil:
             raise LevelDBException("The database has been closed.")
 
 
+cdef inline Options* _create_options(bint create_if_missing = False) except NULL nogil:
+    cdef Options * options = new Options()
+    options.create_if_missing = create_if_missing
+    options.filter_policy = NewBloomFilterPolicy(10)
+    options.block_cache = NewLRUCache(40 * 1024 * 1024)
+    options.write_buffer_size = 4 * 1024 * 1024
+    options.info_log = new NullLogger()
+    options.compressors[0] = new ZlibCompressorRaw(-1)
+    options.compressors[1] = new ZlibCompressor(-1)
+    options.block_size = 163840
+    return options
+
+
 cdef class LevelDB:
     cdef DB *db
     cdef ReadOptions read_options
@@ -188,16 +201,7 @@ cdef class LevelDB:
             else:
                 raise LevelDBException(f"No database exists to open at {path}")
 
-        cdef Options* options = new Options()
-        options.create_if_missing = create_if_missing
-        options.filter_policy = NewBloomFilterPolicy(10)
-        options.block_cache = NewLRUCache(40 * 1024 * 1024)
-        options.write_buffer_size = 4 * 1024 * 1024
-        options.info_log = new NullLogger()
-        options.compressors[0] = new ZlibCompressorRaw(-1)
-        options.compressors[1] = new ZlibCompressor(-1)
-        options.block_size = 163840
-        cdef const Options* const_options = options
+        cdef const Options* const_options = _create_options(True)
 
         self.read_options.decompress_allocator = new DecompressAllocator()
 
@@ -393,3 +397,9 @@ cdef class LevelDB:
 
     def __iter__(self) -> IteratorT[bytes]:
         return self.keys()
+
+
+def repair_db(str path):
+    cdef string s_path = path.encode()
+    cdef const Options* const_options = _create_options()
+    RepairDB(s_path, dereference(const_options))

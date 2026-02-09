@@ -145,3 +145,7 @@ cython_debug/
 .idea/
 
 /src/leveldb/*.cpp
+
+# New Amulet
+/src/amulet/*
+/install

@@ -4,6 +4,7 @@ from ._leveldb import (
     LevelDBEncrypted,
     LevelDBIteratorException,
     Iterator,
+    repair_db
 )
 
 from . import _version

@@ -218,7 +218,7 @@ cdef class LevelDB:
                     del self.db
                     raise LevelDBException(f"Could not recover corrupted database. {msg}")
             else:
-                if status.IsNotSupportedError() and msg.endswith("Marketplace worlds are not supported."):
+                if status.IsNotSupportedError() and msg.endswith(b"Marketplace worlds are not supported."):
                     raise LevelDBEncrypted
                 raise LevelDBException(msg)
 

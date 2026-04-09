@@ -1,5 +1,6 @@
 import sys
 import os
+import sysconfig
 
 from setuptools import setup, Extension
 from Cython.Build import cythonize
@@ -32,10 +33,15 @@ if sys.platform == "win32":
             "./leveldb-mcpe/util/win_logger.cc",
         ]
     )
-    if sys.maxsize > 2**32:  # 64 bit python
+    if sysconfig.get_platform() == "win-amd64":
         extra_objects.append("bin/zlib/win64/zlibstatic.lib")
-    else:  # 32 bit python
+    elif sysconfig.get_platform() == "win32":
         extra_objects.append("bin/zlib/win32/zlibstatic.lib")
+    elif sysconfig.get_platform() == "win-arm64":
+        extra_objects.append("bin/zlib/arm64/zlibstatic.lib")
+    else:
+        raise RuntimeError(f"Unsupported platform: {sysconfig.get_platform()}")
+
 elif sys.platform in ["linux", "darwin"]:
     define_macros.extend([("LEVELDB_PLATFORM_POSIX", None), ("DLLX", "")])
     extra_sources.extend(

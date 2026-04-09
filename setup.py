@@ -1,5 +1,6 @@
 import sys
 import os
+import sysconfig
 
 from setuptools import setup, Extension
 from Cython.Build import cythonize

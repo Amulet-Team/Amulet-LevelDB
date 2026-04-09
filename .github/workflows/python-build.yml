@@ -17,8 +17,6 @@ jobs:
           - { os: windows-2025, python-version: '3.12', architecture: x64 }
           - { os: windows-11-arm, python-version: '3.11', architecture: arm64 }
           - { os: windows-11-arm, python-version: '3.12', architecture: arm64 }
-          - { os: macos-15-intel, python-version: '3.11', architecture: x64 }
-          - { os: macos-15-intel, python-version: '3.12', architecture: x64 }
           - { os: macos-15, python-version: '3.11', architecture: arm64 }
           - { os: macos-15, python-version: '3.12', architecture: arm64 }
 
@@ -27,12 +25,12 @@ jobs:
 
     steps:
     - name: Clone
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: 'recursive'
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.cfg.python-version }}
         architecture: ${{ matrix.cfg.architecture }}

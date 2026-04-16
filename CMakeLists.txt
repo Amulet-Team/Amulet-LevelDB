@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 4.1)
 
 project(amulet_leveldb LANGUAGES CXX)
 
@@ -25,6 +25,8 @@ endif()
 if (MSVC)
     add_definitions("/MP")
 endif()
+
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 # Find libraries
 if (NOT TARGET pybind11::module)

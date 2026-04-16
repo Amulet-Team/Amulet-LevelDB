@@ -14,7 +14,7 @@ authors = [
 ]
 description = "A pybind11 wrapper for Mojang's custom LevelDB."
 dynamic = ["version", "readme", "dependencies"]
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -27,7 +27,6 @@ dev = [
     "versioneer",
     "types-versioneer",
     "packaging",
-    "wheel",
     "pybind11_stubgen>=2.5.4",
     "black>=22.3",
     "isort",

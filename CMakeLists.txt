@@ -76,6 +76,7 @@ target_sources(leveldb PRIVATE ${SOURCE_PATH}/amulet/leveldb/leveldb.cpp)
 
 # Add python extension
 pybind11_add_module(_leveldb)
+set_target_properties(_leveldb PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(_leveldb PROPERTIES FOLDER "Python")
 target_link_libraries(_leveldb PRIVATE amulet_pybind11_extensions)
 target_link_libraries(_leveldb PRIVATE leveldb)

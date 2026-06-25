@@ -281,7 +281,7 @@ cdef class LevelDB:
     def get(self, string key) -> string:
         return self.Get(key)
 
-    cpdef void putBatch(self, dict data: Dict[bytes, Optional[bytes]]) except *:
+    cpdef void putBatch(self, dict data: dict) except *:
         """
         Put one or more key and value pair into the database. Works the same as dict.update
 

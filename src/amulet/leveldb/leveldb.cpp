@@ -95,6 +95,7 @@ void LevelDB::close()
 {
     if (_impl) {
         _impl->close();
+        delete _impl;
         _impl = nullptr;
     }
 }

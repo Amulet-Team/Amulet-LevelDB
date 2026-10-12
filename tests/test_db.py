@@ -355,6 +355,20 @@ class LevelDBTestCase(unittest.TestCase):
 
             self.assertIs(None, db_ref())
 
+    def test_implicit_close(self) -> None:
+        with TemporaryDirectory() as path:
+            db = LevelDB(path, True)
+            db[b"key"] = b"value"
+            it = db.create_iterator()
+            it.seek_to_first()
+            del db
+
+            with self.assertRaises(RuntimeError):
+                it.key()
+
+            reopened = LevelDB(path)
+            reopened.close()
+
     def test_iterator(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)

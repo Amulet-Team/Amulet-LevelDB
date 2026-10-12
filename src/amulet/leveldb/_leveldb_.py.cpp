@@ -3,6 +3,7 @@
 #include <pybind11/typing.h>
 
 #include <filesystem>
+#include <memory>
 #include <optional>
 #include <string>
 #include <variant>
@@ -105,6 +106,8 @@ class LevelDBOptions : public Amulet::LevelDBOptions {
 public:
     NullLogger logger;
     leveldb::DecompressAllocator decompress_allocator;
+    std::unique_ptr<const leveldb::FilterPolicy> filter_policy;
+    std::unique_ptr<leveldb::Cache> block_cache;
 };
 
 std::unique_ptr<Amulet::LevelDB> open_leveldb(
@@ -129,8 +132,10 @@ std::unique_ptr<Amulet::LevelDB> open_leveldb(
 
     auto options = std::make_unique<LevelDBOptions>();
     options->options.create_if_missing = create_if_missing;
-    options->options.filter_policy = leveldb::NewBloomFilterPolicy(10);
-    options->options.block_cache = leveldb::NewLRUCache(40 * 1024 * 1024);
+    options->filter_policy.reset(leveldb::NewBloomFilterPolicy(10));
+    options->options.filter_policy = options->filter_policy.get();
+    options->block_cache.reset(leveldb::NewLRUCache(40 * 1024 * 1024));
+    options->options.block_cache = options->block_cache.get();
     options->options.write_buffer_size = 4 * 1024 * 1024;
     options->options.info_log = &options->logger;
     options->options.compression = compression_type;

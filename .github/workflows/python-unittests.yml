@@ -40,6 +40,8 @@ jobs:
         architecture: ${{ matrix.cfg.architecture }}
 
     - name: Build and Test
+      env:
+        THREAD_SAFETY_ANALYSIS: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && 'ON' || 'OFF' }}
       run: |
         pip install cibuildwheel~=4.1
         cibuildwheel --only ${{ matrix.cfg.whl }} --output-dir dist .

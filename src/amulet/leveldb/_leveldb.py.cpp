@@ -10,6 +10,7 @@ void init_amulet_leveldb(py::module);
 static void _init_amulet_leveldb(py::module m)
 {
     pyext::init_compiler_config(m);
+    pyext::check_compatibility(py::module::import("amulet.utils"), m);
     init_amulet_leveldb(m);
 }
 

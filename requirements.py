@@ -6,9 +6,15 @@ AMULET_COMPILER_TARGET_REQUIREMENT = "==2.0"
 
 PYBIND11_REQUIREMENT = "==3.0.4"
 AMULET_PYBIND11_EXTENSIONS_REQUIREMENT = "~=1.2.0.0a2"
+AMULET_UTILS_REQUIREMENT = "~=1.1.7.0a0"
 
 if os.environ.get("AMULET_PYBIND11_EXTENSIONS_REQUIREMENT", None):
     AMULET_PYBIND11_EXTENSIONS_REQUIREMENT = f"{AMULET_PYBIND11_EXTENSIONS_REQUIREMENT},{os.environ['AMULET_PYBIND11_EXTENSIONS_REQUIREMENT']}"
+
+if os.environ.get("AMULET_UTILS_REQUIREMENT", None):
+    AMULET_UTILS_REQUIREMENT = (
+        f"{AMULET_UTILS_REQUIREMENT},{os.environ['AMULET_UTILS_REQUIREMENT']}"
+    )
 
 
 def get_specifier_set(version_str: str) -> str:
@@ -31,12 +37,20 @@ else:
         amulet.pybind11_extensions.__version__
     )
 
+try:
+    import amulet.utils
+except ImportError:
+    pass
+else:
+    AMULET_UTILS_REQUIREMENT = get_specifier_set(amulet.utils.__version__)
+
 
 def get_build_dependencies() -> list:
     return [
         f"amulet-compiler-version{get_compiler.main()}",
         f"pybind11{PYBIND11_REQUIREMENT}",
         f"amulet-pybind11-extensions{AMULET_PYBIND11_EXTENSIONS_REQUIREMENT}",
+        f"amulet-utils{AMULET_UTILS_REQUIREMENT}",
     ] * (not os.environ.get("AMULET_SKIP_COMPILE", None))
 
 
@@ -46,4 +60,5 @@ def get_runtime_dependencies(sdist: bool = False) -> list[str]:
         f"amulet-compiler-version{get_compiler.main(sdist)}",
         f"pybind11{PYBIND11_REQUIREMENT}",
         f"amulet-pybind11-extensions{AMULET_PYBIND11_EXTENSIONS_REQUIREMENT}",
+        f"amulet-utils{AMULET_UTILS_REQUIREMENT}",
     ]

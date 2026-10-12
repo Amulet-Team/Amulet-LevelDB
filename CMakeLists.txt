@@ -35,6 +35,9 @@ endif()
 if (NOT TARGET amulet_pybind11_extensions)
     find_package(amulet_pybind11_extensions CONFIG REQUIRED)
 endif()
+if (NOT TARGET amulet_utils)
+    find_package(amulet_utils CONFIG REQUIRED)
+endif()
 
 # Add implementation
 include(FetchContent)
@@ -75,7 +78,7 @@ file(GLOB_RECURSE EXTENSION_HEADERS LIST_DIRECTORIES false ${SOURCE_PATH}/amulet
 target_sources(leveldb PRIVATE ${SOURCE_PATH}/amulet/leveldb/leveldb.cpp)
 
 # Add python extension
-pybind11_add_module(_leveldb)
+pybind11_add_module(_leveldb ${EXTENSION_SOURCES} ${EXTENSION_HEADERS})
 if(APPLE)
     set_target_properties(_leveldb PROPERTIES INSTALL_RPATH "@loader_path")
 elseif(UNIX)
@@ -90,7 +93,6 @@ target_compile_definitions(_leveldb PRIVATE PYBIND11_VERSION="${pybind11_VERSION
 target_compile_definitions(_leveldb PRIVATE COMPILER_ID="${CMAKE_CXX_COMPILER_ID}")
 target_compile_definitions(_leveldb PRIVATE COMPILER_VERSION="${CMAKE_CXX_COMPILER_VERSION}")
 target_include_directories(_leveldb PRIVATE "${amulet_leveldb_DIR}/include")
-target_sources(_leveldb PRIVATE ${EXTENSION_SOURCES} ${EXTENSION_HEADERS})
 foreach(FILE ${EXTENSION_SOURCES} ${EXTENSION_HEADERS})
     file(RELATIVE_PATH REL_PATH ${SOURCE_PATH} ${FILE})
     get_filename_component(GROUP ${REL_PATH} DIRECTORY)

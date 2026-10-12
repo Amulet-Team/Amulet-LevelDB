@@ -76,11 +76,17 @@ test-command = [
     "python -m unittest discover -s tests"
 ]
 
+manylinux-x86_64-image = "manylinux_2_34"
+
 [tool.cibuildwheel.linux]
 before-all = "yum install -y cmake"
+repair-wheel-command = "auditwheel repair --exclude libamulet_utils.so -w {dest_dir} {wheel}"
+
+[tool.cibuildwheel.macos]
+repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} --ignore-missing-dependencies --exclude libamulet_utils.dylib -w {dest_dir} -v {wheel}"
 
 [tool.cibuildwheel.windows]
-repair-wheel-command = "delvewheel repair --ignore-existing --exclude msvcp140.dll -w {dest_dir} -v {wheel}"
+repair-wheel-command = "delvewheel repair --ignore-existing --exclude \"msvcp140.dll;amulet_utils.dll\" -w {dest_dir} -v {wheel}"
 test-command = [
     "python -m venv venv_build",
     "venv_build\\Scripts\\pip install {wheel}[dev]",

@@ -63,7 +63,7 @@ public:
     std::set<LevelDBIterator*> iterators;
     std::recursive_mutex iterators_mutex;
 
-    void close();
+    ~LevelDBImpl();
 
     std::unique_ptr<LevelDBIterator> create_iterator();
 };
@@ -74,14 +74,7 @@ void LevelDBImpl::remove_iterator(LevelDBImpl* self, LevelDBIterator* it)
     self->iterators.erase(it);
 }
 
-LevelDB::LevelDB(
-    std::unique_ptr<leveldb::DB> db,
-    std::unique_ptr<LevelDBOptions> options)
-    : _impl(new LevelDBImpl { std::move(db), std::move(options) })
-{
-}
-
-void LevelDBImpl::close()
+LevelDBImpl::~LevelDBImpl()
 {
     std::lock_guard lock(iterators_mutex);
     while (!iterators.empty()) {
@@ -91,10 +84,17 @@ void LevelDBImpl::close()
     db.reset();
 }
 
+LevelDB::LevelDB(
+    std::unique_ptr<leveldb::DB> db,
+    std::unique_ptr<LevelDBOptions> options)
+    : _impl(new LevelDBImpl { std::move(db), std::move(options) })
+{
+}
+
 void LevelDB::close()
 {
     if (_impl) {
-        _impl->close();
+        delete _impl;
         _impl = nullptr;
     }
 }

@@ -85,7 +85,7 @@ list(REMOVE_ITEM HEADERS ${EXTENSION_HEADERS})
 
 # Extend the leveldb binary
 target_sources(leveldb PRIVATE ${SOURCES} ${HEADERS})
-target_link_libraries(leveldb PRIVATE amulet_utils)
+target_link_libraries(leveldb amulet_utils)
 foreach(FILE ${SOURCES} ${HEADERS})
     file(RELATIVE_PATH REL_PATH ${SOURCE_PATH} ${FILE})
     get_filename_component(GROUP ${REL_PATH} DIRECTORY)

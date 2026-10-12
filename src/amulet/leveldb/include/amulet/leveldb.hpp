@@ -74,8 +74,11 @@ public:
     // This must only be called by the owner.
     void close();
 
-    // Is the database valid?
+    // Is the database open?
     // If this returns false, all other calls will fail.
+    bool is_open();
+
+    // Alias for is_open()
     operator bool();
 
     // Get the raw leveldb object.

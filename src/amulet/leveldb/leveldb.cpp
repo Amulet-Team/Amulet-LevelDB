@@ -22,8 +22,10 @@ LevelDBIterator::~LevelDBIterator()
 
 void LevelDBIterator::destroy()
 {
-    delete _it;
-    _it = nullptr;
+    if (_it) {
+        delete _it;
+        _it = nullptr;
+    }
 }
 
 LevelDBIterator::operator bool()

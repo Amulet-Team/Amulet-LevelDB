@@ -35,10 +35,10 @@ LevelDBIterator::~LevelDBIterator()
     destroy();
 }
 
-void LevelDBIterator::destroy_locked() ASTD_REQUIRES_UNIQUE(_shared->m)
+void LevelDBIterator::destroy_locked(LevelDBImplShared& shared)
 {
     if (_it) {
-        _shared->iterators.erase(this);
+        shared.iterators.erase(this);
         delete _it;
         _it = nullptr;
     }
@@ -47,7 +47,7 @@ void LevelDBIterator::destroy_locked() ASTD_REQUIRES_UNIQUE(_shared->m)
 void LevelDBIterator::destroy()
 {
     astd::lock_guard lock(_shared->m);
-    destroy_locked();
+    destroy_locked(*_shared);
 }
 
 LevelDBIterator::operator bool() const
@@ -150,7 +150,7 @@ void LevelDBImpl::close()
     std::set<LevelDBIterator*> iterators;
     iterators.swap(_shared->iterators);
     for (auto* it : iterators) {
-        it->destroy_locked();
+        it->destroy_locked(*_shared);
     }
 
     // Destroy db

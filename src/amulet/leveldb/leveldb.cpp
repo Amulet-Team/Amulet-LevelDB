@@ -35,7 +35,7 @@ LevelDBIterator::~LevelDBIterator()
     destroy();
 }
 
-void LevelDBIterator::destroy_locked()
+void LevelDBIterator::destroy_locked() ASTD_REQUIRES_UNIQUE(_shared->m)
 {
     if (_it) {
         _shared->iterators.erase(this);

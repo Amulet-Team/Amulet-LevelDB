@@ -2,8 +2,6 @@
 
 #include <memory>
 
-#include <amulet/utils/threading/thread_safety.hpp>
-
 #include <leveldb/db.h>
 #include <leveldb/iterator.h>
 #include <leveldb/options.h>
@@ -27,7 +25,7 @@ private:
     LevelDBIterator(std::shared_ptr<LevelDBImplShared>, leveldb::Iterator*);
 
     // Destroy the iterator while holding the lock.
-    void destroy_locked(LevelDBImplShared& shared) ASTD_REQUIRES_UNIQUE(shared.m);
+    void destroy_locked(LevelDBImplShared& shared);
 
     // Destroy the iterator
     void destroy();

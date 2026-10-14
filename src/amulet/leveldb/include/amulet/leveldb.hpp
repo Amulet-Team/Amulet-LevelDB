@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <leveldb/db.h>
 #include <leveldb/iterator.h>
 #include <leveldb/options.h>
@@ -7,16 +9,26 @@
 namespace Amulet {
 
 class LevelDBImpl;
+class LevelDBImplShared;
 
+// A wrapper for leveldb's iterator.
+// The iterator will be destroyed when the database is closed.
+// The caller must ensure the iterator is not used during or after closing the database.
 class LEVELDB_EXPORT LevelDBIterator {
 private:
+    std::shared_ptr<LevelDBImplShared> _shared;
     leveldb::Iterator* _it;
 
     friend class LevelDBImpl;
-    void destroy();
 
     // Constructor
-    LevelDBIterator(leveldb::Iterator*);
+    LevelDBIterator(std::shared_ptr<LevelDBImplShared>, leveldb::Iterator*);
+
+    // Destroy the iterator while holding the lock.
+    void destroy_locked(LevelDBImplShared& shared);
+
+    // Destroy the iterator
+    void destroy();
 
 public:
     // Copy
@@ -27,16 +39,23 @@ public:
     LevelDBIterator(LevelDBIterator&&) = delete;
     LevelDBIterator& operator=(LevelDBIterator&&) = delete;
 
-    // Delete
+    // Destructor
     ~LevelDBIterator();
 
     // Check if the iterator is still alive.
-    // If false other calls will error.
-    operator bool();
+    // If false, calls to other functions are undefined behaviour.
+    explicit operator bool() const;
 
     // Get the raw iterator.
+    // The caller must ensure the iterator is not used during or after closing the database.
     leveldb::Iterator* operator->();
+
+    // Get the raw iterator.
+    // The caller must ensure the iterator is not used during or after closing the database.
     leveldb::Iterator& operator*();
+
+    // Get the raw iterator.
+    // The caller must ensure the iterator is not used during or after closing the database.
     leveldb::Iterator& get_iterator();
 };
 
@@ -49,12 +68,18 @@ public:
     virtual ~LevelDBOptions() = default;
 };
 
+// A wrapper for Mojang's leveldb database.
+// This class is mostly thread safe. LevelDB handles locking internally.
+// The one exception is when closing the database.
+// No threads may interact with the database or its iterators during or after closing the database.
 class LEVELDB_EXPORT LevelDB {
 private:
     LevelDBImpl* _impl;
 
 public:
     // Constructor
+    // Takes ownership of the db and options.
+    // Options must delete any resources it allocated in its destructor.
     LevelDB(
         std::unique_ptr<leveldb::DB> db,
         std::unique_ptr<LevelDBOptions> options);
@@ -71,27 +96,41 @@ public:
     ~LevelDB();
 
     // Close the database and delete all iterators.
-    // This must only be called by the owner.
+    // The caller must ensure no code is interacting with this class, the db or its iterators when this is called.
     void close();
 
-    // Is the database valid?
+    // Is the database open?
     // If this returns false, all other calls will fail.
-    operator bool();
+    bool is_open() const;
 
-    // Get the raw leveldb object.
+    // Alias for is_open()
+    explicit operator bool() const;
+
+    // Raw leveldb accessor.
+    // Requires is_open()
+    // close() must not be called while the db is in use.
     leveldb::DB* operator->();
+
+    // Raw leveldb accessor.
+    // Requires is_open()
+    // close() must not be called while the db is in use.
     leveldb::DB& operator*();
+
+    // Raw leveldb accessor.
+    // Requires is_open()
+    // close() must not be called while the db is in use.
     leveldb::DB& get_database();
 
     // Create an iterator that is automatically destroyed when the database is closed.
-    // You may use raw iterators but you must ensure the database outlives the iterator.
+    // Requires is_open()
+    // close() must not be called while the iterator is in use.
     std::unique_ptr<LevelDBIterator> create_iterator();
 
     // Get the read options for the database.
-    const leveldb::ReadOptions& get_read_options();
+    const leveldb::ReadOptions& get_read_options() const;
 
     // Get the write options for the database.
-    const leveldb::WriteOptions& get_write_options();
+    const leveldb::WriteOptions& get_write_options() const;
 };
 
 } // namespace Amulet

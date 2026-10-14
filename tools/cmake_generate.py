@@ -6,6 +6,7 @@ import sysconfig
 
 import pybind11
 import amulet.pybind11_extensions
+import amulet.utils
 
 
 def fix_path(path: str) -> str:
@@ -41,9 +42,11 @@ def main() -> None:
             f"-DPython3_EXECUTABLE={fix_path(sys.executable)}",
             f"-Dpybind11_DIR={fix_path(pybind11.get_cmake_dir())}",
             f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
+            f"-Damulet_utils_DIR={fix_path(amulet.utils.__path__[0])}",
             f"-Damulet_leveldb_DIR={fix_path(os.path.join(RootDir, 'src', 'amulet', 'leveldb'))}",
             f"-DCMAKE_INSTALL_PREFIX=install",
             f"-DBUILD_AMULET_LEVELDB_TESTS=ON",
+            f"-DTHREAD_SAFETY_ANALYSIS={os.environ.get("THREAD_SAFETY_ANALYSIS", "OFF")}",
             "-B",
             "build",
         ]

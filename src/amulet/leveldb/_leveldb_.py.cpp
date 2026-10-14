@@ -105,9 +105,30 @@ class LevelDBOptions : public Amulet::LevelDBOptions {
 public:
     NullLogger logger;
     leveldb::DecompressAllocator decompress_allocator;
+
+    LevelDBOptions(bool create_if_missing, leveldb::CompressionType compression_type);
+    ~LevelDBOptions() override;
 };
 
-std::unique_ptr<Amulet::LevelDB> open_leveldb(
+LevelDBOptions::LevelDBOptions(bool create_if_missing, leveldb::CompressionType compression_type)
+{
+    options.create_if_missing = create_if_missing;
+    options.filter_policy = leveldb::NewBloomFilterPolicy(10);
+    options.block_cache = leveldb::NewLRUCache(40 * 1024 * 1024);
+    options.write_buffer_size = 4 * 1024 * 1024;
+    options.info_log = &logger;
+    options.compression = compression_type;
+    options.block_size = 163840;
+    read_options.decompress_allocator = &decompress_allocator;
+}
+
+LevelDBOptions::~LevelDBOptions()
+{
+    delete options.filter_policy;
+    delete options.block_cache;
+}
+
+static std::unique_ptr<Amulet::LevelDB> open_leveldb(
     std::string path_str,
     bool create_if_missing = false,
     leveldb::CompressionType compression_type = leveldb::kZlibRawCompression)
@@ -127,16 +148,7 @@ std::unique_ptr<Amulet::LevelDB> open_leveldb(
         }
     }
 
-    auto options = std::make_unique<LevelDBOptions>();
-    options->options.create_if_missing = create_if_missing;
-    options->options.filter_policy = leveldb::NewBloomFilterPolicy(10);
-    options->options.block_cache = leveldb::NewLRUCache(40 * 1024 * 1024);
-    options->options.write_buffer_size = 4 * 1024 * 1024;
-    options->options.info_log = &options->logger;
-    options->options.compression = compression_type;
-    options->options.block_size = 163840;
-
-    options->read_options.decompress_allocator = &options->decompress_allocator;
+    auto options = std::make_unique<LevelDBOptions>(create_if_missing, compression_type);
 
     leveldb::DB* _db = NULL;
     auto status = leveldb::DB::Open(options->options, path.string(), &_db);

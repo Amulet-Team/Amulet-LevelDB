@@ -95,6 +95,9 @@ class LevelDBException : public std::runtime_error {
 class LevelDBEncrypted : public LevelDBException {
     using LevelDBException::LevelDBException;
 };
+class LevelDBIteratorException : public LevelDBException {
+    using LevelDBException::LevelDBException;
+};
 
 class NullLogger : public leveldb::Logger {
 public:
@@ -190,7 +193,7 @@ public:
     {
         auto& iterator = *iterator_ptr;
         if (!iterator) {
-            throw std::runtime_error("LevelDBIterator has been deleted.");
+            throw LevelDBIteratorException("LevelDBIterator has been deleted.");
         }
         if (!iterator->Valid()) {
             throw py::stop_iteration();
@@ -219,7 +222,7 @@ public:
     {
         auto& iterator = *iterator_ptr;
         if (!iterator) {
-            throw std::runtime_error("LevelDBIterator has been deleted.");
+            throw LevelDBIteratorException("LevelDBIterator has been deleted.");
         }
         if (!iterator->Valid()) {
             throw py::stop_iteration();
@@ -248,7 +251,7 @@ public:
     {
         auto& iterator = *iterator_ptr;
         if (!iterator) {
-            throw std::runtime_error("LevelDBIterator has been deleted.");
+            throw LevelDBIteratorException("LevelDBIterator has been deleted.");
         }
         if (!iterator->Valid()) {
             throw py::stop_iteration();
@@ -282,7 +285,7 @@ public:
     {
         auto& iterator = *iterator_ptr;
         if (!iterator) {
-            throw std::runtime_error("LevelDBIterator has been deleted.");
+            throw LevelDBIteratorException("LevelDBIterator has been deleted.");
         }
         if (!iterator->Valid()) {
             throw py::stop_iteration();
@@ -306,7 +309,7 @@ static std::unique_ptr<Amulet::LevelDBIterator> get_start_iterator(Amulet::Level
 {
     py::gil_scoped_release nogil;
     if (!db) {
-        throw std::runtime_error("The LevelDB database has been closed.");
+        throw LevelDBException("The LevelDB database has been closed.");
     }
     auto iterator_ptr = db.create_iterator();
     auto& iterator = *iterator_ptr;
@@ -320,10 +323,12 @@ void init_amulet_leveldb(py::module m)
 {
     std::string module_name = m.attr("__name__").cast<std::string>();
 
-    py::register_local_exception<LevelDBException>(m, "LevelDBException");
-    py::register_local_exception<LevelDBEncrypted>(m, "LevelDBEncrypted");
+    auto& PyLevelDBException = py::register_local_exception<LevelDBException>(m, "LevelDBException", PyExc_RuntimeError);
+    py::register_local_exception<LevelDBEncrypted>(m, "LevelDBEncrypted", PyLevelDBException.ptr());
+    py::register_local_exception<LevelDBIteratorException>(m, "LevelDBIteratorException", PyLevelDBException.ptr());
 
     py::classh<Amulet::LevelDBIterator> LevelDBIterator(m, "LevelDBIterator", py::release_gil_before_calling_cpp_dtor());
+    m.attr("Iterator") = LevelDBIterator;
     LevelDBIterator.def(
         "valid",
         [](Amulet::LevelDBIterator& self) {
@@ -336,7 +341,7 @@ void init_amulet_leveldb(py::module m)
         "seek_to_first",
         [](Amulet::LevelDBIterator& self) {
             if (!self) {
-                throw std::runtime_error("LevelDBIterator has been deleted.");
+                throw LevelDBIteratorException("LevelDBIterator has been deleted.");
             }
             self->SeekToFirst();
         },
@@ -345,7 +350,7 @@ void init_amulet_leveldb(py::module m)
         "seek_to_last",
         [](Amulet::LevelDBIterator& self) {
             if (!self) {
-                throw std::runtime_error("LevelDBIterator has been deleted.");
+                throw LevelDBIteratorException("LevelDBIterator has been deleted.");
             }
             self->SeekToLast();
         },
@@ -354,7 +359,7 @@ void init_amulet_leveldb(py::module m)
         "seek",
         [](Amulet::LevelDBIterator& self, leveldb::Slice target) {
             if (!self) {
-                throw std::runtime_error("LevelDBIterator has been deleted.");
+                throw LevelDBIteratorException("LevelDBIterator has been deleted.");
             }
             self->Seek(target);
         },
@@ -366,7 +371,7 @@ void init_amulet_leveldb(py::module m)
         "next",
         [](Amulet::LevelDBIterator& self) {
             if (!self) {
-                throw std::runtime_error("LevelDBIterator has been deleted.");
+                throw LevelDBIteratorException("LevelDBIterator has been deleted.");
             }
             self->Next();
         },
@@ -376,7 +381,7 @@ void init_amulet_leveldb(py::module m)
         "prev",
         [](Amulet::LevelDBIterator& self) {
             if (!self) {
-                throw std::runtime_error("LevelDBIterator has been deleted.");
+                throw LevelDBIteratorException("LevelDBIterator has been deleted.");
             }
             self->Prev();
         },
@@ -386,30 +391,30 @@ void init_amulet_leveldb(py::module m)
         "key",
         [](Amulet::LevelDBIterator& self) {
             if (!self) {
-                throw std::runtime_error("LevelDBIterator has been deleted.");
+                throw LevelDBIteratorException("LevelDBIterator has been deleted.");
             }
             if (!self->Valid()) {
-                throw std::runtime_error("LevelDBIterator does not point to a valid value.");
+                throw LevelDBIteratorException("LevelDBIterator does not point to a valid value.");
             }
             return py::bytes(self->key().data(), self->key().size());
         },
         py::doc(
             "Get the key of the current entry in the database.\n"
-            ":raises: runtime_error if iterator is not valid."));
+            ":raises: LevelDBIteratorException if iterator is not valid."));
     LevelDBIterator.def(
         "value",
         [](Amulet::LevelDBIterator& self) {
             if (!self) {
-                throw std::runtime_error("LevelDBIterator has been deleted.");
+                throw LevelDBIteratorException("LevelDBIterator has been deleted.");
             }
             if (!self->Valid()) {
-                throw std::runtime_error("LevelDBIterator does not point to a valid value.");
+                throw LevelDBIteratorException("LevelDBIterator does not point to a valid value.");
             }
             return py::bytes(self->value().data(), self->value().size());
         },
         py::doc(
             "Get the value of the current entry in the database.\n"
-            ":raises: runtime_error if iterator is not valid."));
+            ":raises: LevelDBIteratorException if iterator is not valid."));
 
     py::enum_<leveldb::CompressionType> CompressionType(m, "CompressionType");
     CompressionType.value(
@@ -454,7 +459,13 @@ void init_amulet_leveldb(py::module m)
 
     LevelDB.def(
         "close",
-        &Amulet::LevelDB::close,
+        [](Amulet::LevelDB& self, bool compact) {
+            if (compact && self) {
+                self->CompactRange(nullptr, nullptr);
+            }
+            self.close();
+        },
+        py::arg("compact") = false,
         py::doc(
             "Close the leveldb database.\n"
             "Only the owner of the database may close it.\n"
@@ -465,7 +476,7 @@ void init_amulet_leveldb(py::module m)
         "compact",
         [](Amulet::LevelDB& self) {
             if (!self) {
-                throw std::runtime_error("The LevelDB database has been closed.");
+                throw LevelDBException("The LevelDB database has been closed.");
             }
             self->CompactRange(nullptr, nullptr);
         },
@@ -474,7 +485,7 @@ void init_amulet_leveldb(py::module m)
 
     auto put = [](Amulet::LevelDB& self, leveldb::Slice key, leveldb::Slice value) {
         if (!self) {
-            throw std::runtime_error("The LevelDB database has been closed.");
+            throw LevelDBException("The LevelDB database has been closed.");
         }
         auto status = self->Put(self.get_write_options(), key, value);
         if (!status.ok()) {
@@ -483,7 +494,7 @@ void init_amulet_leveldb(py::module m)
     };
     LevelDB.def(
         "put", put,
-        py::arg("key"), py::arg("value"),
+        py::arg("key"), py::arg("val"),
         py::doc("Set a value in the database."),
         py::call_guard<py::gil_scoped_release>());
     LevelDB.def(
@@ -492,17 +503,17 @@ void init_amulet_leveldb(py::module m)
         py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(
-        "put_batch",
+        "putBatch",
         [](Amulet::LevelDB& self, leveldb::WriteBatch batch) {
             if (!self) {
-                throw std::runtime_error("The LevelDB database has been closed.");
+                throw LevelDBException("The LevelDB database has been closed.");
             }
             leveldb::Status status = self->Write(self.get_write_options(), &batch);
             if (!status.ok()) {
                 throw LevelDBException(status.ToString());
             }
         },
-        py::arg("batch"),
+        py::arg("data"),
         py::doc("Set a group of values in the database."),
         py::call_guard<py::gil_scoped_release>());
 
@@ -510,7 +521,7 @@ void init_amulet_leveldb(py::module m)
         "__contains__",
         [](Amulet::LevelDB& self, leveldb::Slice key) {
             if (!self) {
-                throw std::runtime_error("The LevelDB database has been closed.");
+                throw LevelDBException("The LevelDB database has been closed.");
             }
             std::string value;
             return self->Get(self.get_read_options(), key, &value).ok();
@@ -524,7 +535,7 @@ void init_amulet_leveldb(py::module m)
         {
             py::gil_scoped_release gil;
             if (!self) {
-                throw std::runtime_error("The LevelDB database has been closed.");
+                throw LevelDBException("The LevelDB database has been closed.");
             }
             status = self->Get(self.get_read_options(), key, &value);
         }
@@ -551,7 +562,7 @@ void init_amulet_leveldb(py::module m)
 
     auto del = [](Amulet::LevelDB& self, leveldb::Slice key) {
         if (!self) {
-            throw std::runtime_error("The LevelDB database has been closed.");
+            throw LevelDBException("The LevelDB database has been closed.");
         }
         auto status = self->Delete(self.get_write_options(), key);
         if (!status.ok()) {
@@ -573,7 +584,7 @@ void init_amulet_leveldb(py::module m)
         py::call_guard<py::gil_scoped_release>());
 
     LevelDB.def(
-        "create_iterator",
+        "new_iterator",
         &Amulet::LevelDB::create_iterator,
         py::doc("Create a new leveldb Iterator."),
         py::call_guard<py::gil_scoped_release>());
@@ -585,7 +596,7 @@ void init_amulet_leveldb(py::module m)
             std::optional<py::bytes> start,
             std::optional<py::bytes> end) {
             if (!self) {
-                throw std::runtime_error("The LevelDB database has been closed.");
+                throw LevelDBException("The LevelDB database has been closed.");
             }
             std::unique_ptr<Amulet::LevelDBIterator> iterator_ptr;
             {
@@ -644,4 +655,18 @@ void init_amulet_leveldb(py::module m)
                 LevelDBItemsIterator(get_start_iterator(self)));
         },
         py::doc("An iterable of all items in the database."));
+
+    m.def(
+        "repair_db",
+        [](std::string path) {
+            LevelDBOptions options(false, leveldb::kZlibRawCompression);
+            leveldb::RepairDB(path, options.options);
+        },
+        py::arg("path"),
+        py::doc(
+            "Repair a corrupted leveldb database.\n"
+            "\n"
+            ":param path: The path to the leveldb directory."
+        )
+    );
 }

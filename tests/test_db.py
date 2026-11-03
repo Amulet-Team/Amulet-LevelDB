@@ -9,7 +9,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from collections.abc import Iterable, Sequence
 
-from leveldb import LevelDB, LevelDBException
+from leveldb import LevelDB, LevelDBException, LevelDBIteratorException
 
 num_keys = [struct.pack("<Q", i) for i in range(10_000)]
 num_db = dict(zip(num_keys, num_keys))
@@ -56,7 +56,7 @@ class LevelDBTestCase(unittest.TestCase):
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
 
-            db.put_batch(incr_db)
+            db.putBatch(incr_db)
 
             for k, v in num_db.items():
                 db.put(k, v)
@@ -124,39 +124,42 @@ class LevelDBTestCase(unittest.TestCase):
             # if the db is closed all of these functions should error
             # they should not cause segmentation faults
             db.close()  # This should do nothing.
-            with self.assertRaises(RuntimeError):
-                db.compact()
-            with self.assertRaises(RuntimeError):
-                db.get(b"key")
-            with self.assertRaises(RuntimeError):
-                _ = db[b"key"]
-            with self.assertRaises(RuntimeError):
-                db.put(b"key", b"value")
-            with self.assertRaises(RuntimeError):
-                db[b"key"] = b"value"
-            with self.assertRaises(RuntimeError):
-                db.put_batch({b"key": b"value"})
-            with self.assertRaises(RuntimeError):
-                db.delete(b"key")
-            with self.assertRaises(RuntimeError):
-                del db[b"key"]
-            with self.assertRaises(RuntimeError):
-                list(db.iterate(b"\x00", b"\xff"))
-            with self.assertRaises(RuntimeError):
-                list(db.keys())
-            with self.assertRaises(RuntimeError):
-                list(db.values())
-            with self.assertRaises(RuntimeError):
-                list(db.items())
-            with self.assertRaises(RuntimeError):
-                _ = b"key" in db
-            with self.assertRaises(RuntimeError):
-                list(db)
+
+            for cls in (RuntimeError, LevelDBException):
+                with self.subTest(cls=cls):
+                    with self.assertRaises(cls):
+                        db.compact()
+                    with self.assertRaises(cls):
+                        db.get(b"key")
+                    with self.assertRaises(cls):
+                        _ = db[b"key"]
+                    with self.assertRaises(cls):
+                        db.put(b"key", b"value")
+                    with self.assertRaises(cls):
+                        db[b"key"] = b"value"
+                    with self.assertRaises(cls):
+                        db.putBatch({b"key": b"value"})
+                    with self.assertRaises(cls):
+                        db.delete(b"key")
+                    with self.assertRaises(cls):
+                        del db[b"key"]
+                    with self.assertRaises(cls):
+                        list(db.iterate(b"\x00", b"\xff"))
+                    with self.assertRaises(cls):
+                        list(db.keys())
+                    with self.assertRaises(cls):
+                        list(db.values())
+                    with self.assertRaises(cls):
+                        list(db.items())
+                    with self.assertRaises(cls):
+                        _ = b"key" in db
+                    with self.assertRaises(cls):
+                        list(db)
 
     def test_iterate_twice(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
-            db.put_batch(
+            db.putBatch(
                 {
                     b"a": b"1",
                     b"b": b"2",
@@ -181,7 +184,7 @@ class LevelDBTestCase(unittest.TestCase):
     def test_keys_twice(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
-            db.put_batch(
+            db.putBatch(
                 {
                     b"a": b"1",
                     b"b": b"2",
@@ -206,7 +209,7 @@ class LevelDBTestCase(unittest.TestCase):
     def test_iter_mutate(self) -> None:
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
-            db.put_batch(
+            db.putBatch(
                 {
                     b"a": b"1",
                     b"b": b"2",
@@ -315,7 +318,7 @@ class LevelDBTestCase(unittest.TestCase):
             db[b"3"] = b"3"
 
             # Get iterators
-            it = db.create_iterator()
+            it = db.new_iterator()
             it.seek_to_first()
             it_k = db.keys()
             it_v = db.values()
@@ -325,33 +328,37 @@ class LevelDBTestCase(unittest.TestCase):
             # Close database
             db.close()
 
-            with self.assertRaises(RuntimeError):
-                it.key()
-            with self.assertRaises(RuntimeError):
-                it.value()
-            with self.assertRaises(RuntimeError):
-                next(it_k)
-            with self.assertRaises(RuntimeError):
-                next(it_v)
-            with self.assertRaises(RuntimeError):
-                next(it_i)
-            with self.assertRaises(RuntimeError):
-                next(it_it)
+            for cls in (RuntimeError, LevelDBIteratorException):
+                with self.subTest(cls=cls):
+                    with self.assertRaises(cls):
+                        it.key()
+                    with self.assertRaises(cls):
+                        it.value()
+                    with self.assertRaises(cls):
+                        next(it_k)
+                    with self.assertRaises(cls):
+                        next(it_v)
+                    with self.assertRaises(cls):
+                        next(it_i)
+                    with self.assertRaises(cls):
+                        next(it_it)
 
             del db
 
-            with self.assertRaises(RuntimeError):
-                it.key()
-            with self.assertRaises(RuntimeError):
-                it.value()
-            with self.assertRaises(RuntimeError):
-                next(it_k)
-            with self.assertRaises(RuntimeError):
-                next(it_v)
-            with self.assertRaises(RuntimeError):
-                next(it_i)
-            with self.assertRaises(RuntimeError):
-                next(it_it)
+            for cls in (RuntimeError, LevelDBIteratorException):
+                with self.subTest(cls=cls):
+                    with self.assertRaises(cls):
+                        it.key()
+                    with self.assertRaises(cls):
+                        it.value()
+                    with self.assertRaises(cls):
+                        next(it_k)
+                    with self.assertRaises(cls):
+                        next(it_v)
+                    with self.assertRaises(cls):
+                        next(it_i)
+                    with self.assertRaises(cls):
+                        next(it_it)
 
             self.assertIs(None, db_ref())
 
@@ -359,13 +366,15 @@ class LevelDBTestCase(unittest.TestCase):
         with TemporaryDirectory() as path:
             db = LevelDB(path, True)
 
-            it1 = db.create_iterator()
+            it1 = db.new_iterator()
             it1.seek_to_first()
             self.assertFalse(it1.valid())
-            with self.assertRaises(RuntimeError):
-                it1.key()
-            with self.assertRaises(RuntimeError):
-                it1.value()
+            for cls in (RuntimeError, LevelDBIteratorException):
+                with self.subTest(cls=cls):
+                    with self.assertRaises(cls):
+                        it1.key()
+                    with self.assertRaises(cls):
+                        it1.value()
 
             # Set values
             db[b"1"] = b"2"
@@ -373,19 +382,23 @@ class LevelDBTestCase(unittest.TestCase):
             db[b"5"] = b"6"
 
             # The first iterator should remain invalid
-            with self.assertRaises(RuntimeError):
-                it1.key()
-            with self.assertRaises(RuntimeError):
-                it1.value()
+            for cls in (RuntimeError, LevelDBIteratorException):
+                with self.subTest(cls=cls):
+                    with self.assertRaises(cls):
+                        it1.key()
+                    with self.assertRaises(cls):
+                        it1.value()
 
             it1.seek_to_first()
             self.assertFalse(it1.valid())
-            with self.assertRaises(RuntimeError):
-                it1.key()
-            with self.assertRaises(RuntimeError):
-                it1.value()
+            for cls in (RuntimeError, LevelDBIteratorException):
+                with self.subTest(cls=cls):
+                    with self.assertRaises(cls):
+                        it1.key()
+                    with self.assertRaises(cls):
+                        it1.value()
 
-            it2 = db.create_iterator()
+            it2 = db.new_iterator()
             it2.seek_to_first()
             self.assertTrue(it2.valid())
             self.assertEqual(b"1", it2.key())
@@ -489,7 +502,7 @@ class LevelDBTestCase(unittest.TestCase):
             db = LevelDB(path)
             m1 = {}
             t1 = -time.time()
-            it = db.create_iterator()
+            it = db.new_iterator()
             it.seek_to_first()
             while it.valid():
                 m1[it.key()] = it.value()
@@ -504,7 +517,7 @@ class LevelDBTestCase(unittest.TestCase):
             t2 = -time.time()
 
             def read(values: Sequence[bytes]) -> None:
-                it = db.create_iterator()
+                it = db.new_iterator()
                 it.seek(values[0])
                 for _ in range(count):
                     m2[it.key()] = it.value()

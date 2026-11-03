@@ -16,12 +16,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        python-version: ['3.11', '3.12']
         cfg:
-          - { os: windows-2025-vs2026, python-version: '3.14', architecture: x64, whl: 'cp314-win_amd64' }
-          - { os: windows-11-vs2026-arm, python-version: '3.14', architecture: arm64, whl: 'cp314-win_arm64' }
-          - { os: macos-15-intel, python-version: '3.14', architecture: x64, whl: 'cp314-macosx_x86_64' }
-          - { os: macos-15, python-version: '3.14', architecture: arm64, whl: 'cp314-macosx_arm64' }
-          - { os: ubuntu-24.04, python-version: '3.14', architecture: x64, whl: 'cp314-manylinux_x86_64' }
+          - { os: windows-2025-vs2026, architecture: x64, whl: 'cp314-win_amd64' }
+          - { os: windows-11-vs2026-arm, architecture: arm64, whl: 'cp314-win_arm64' }
+          - { os: macos-15-intel, architecture: x64, whl: 'cp314-macosx_x86_64' }
+          - { os: macos-15, architecture: arm64, whl: 'cp314-macosx_arm64' }
+          - { os: ubuntu-24.04, architecture: x64, whl: 'cp314-manylinux_x86_64' }
 
     runs-on: ${{ matrix.cfg.os }}
     timeout-minutes: 45
@@ -36,7 +37,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: ${{ matrix.cfg.python-version }}
+        python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.cfg.architecture }}
 
     - name: Build and Test

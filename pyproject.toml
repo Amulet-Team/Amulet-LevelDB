@@ -14,7 +14,7 @@ authors = [
 ]
 description = "A pybind11 wrapper for Mojang's custom LevelDB."
 dynamic = ["version", "readme", "dependencies"]
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -43,6 +43,9 @@ Issues = "https://github.com/Amulet-Team/Amulet-LevelDB/issues"
 [tool.setuptools]
 include-package-data = false
 
+[tool.setuptools.packages.find]
+where = ["src/amulet"]
+
 [tool.setuptools.package-data]
 "*" = [
     "*Config.cmake",
@@ -57,13 +60,13 @@ include-package-data = false
 readme = {file = ["README.md"], content-type = "text/markdown"}
 
 [project.entry-points.pyinstaller40]
-hook-dirs = "amulet.leveldb.__pyinstaller:get_hook_dirs"
+hook-dirs = "leveldb.__pyinstaller:get_hook_dirs"
 
 [tool.versioneer]
 VCS = "git"
 style = "pep440"
 versionfile_source = "src/amulet/leveldb/_version.py"
-versionfile_build = "amulet/leveldb/_version.py"
+versionfile_build = "leveldb/_version.py"
 tag_prefix = ""
 parentdir_prefix = "amulet_leveldb-"
 
@@ -80,13 +83,13 @@ manylinux-x86_64-image = "manylinux_2_34"
 
 [tool.cibuildwheel.linux]
 before-all = "yum install -y cmake"
-repair-wheel-command = "auditwheel repair --exclude libamulet_utils.so -w {dest_dir} {wheel}"
+repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
-repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} --ignore-missing-dependencies --exclude libamulet_utils.dylib -w {dest_dir} -v {wheel}"
+repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} --ignore-missing-dependencies -w {dest_dir} -v {wheel}"
 
 [tool.cibuildwheel.windows]
-repair-wheel-command = "delvewheel repair --ignore-existing --exclude \"msvcp140.dll;amulet_utils.dll\" -w {dest_dir} -v {wheel}"
+repair-wheel-command = "delvewheel repair --ignore-existing --exclude \"msvcp140.dll\" -w {dest_dir} -v {wheel}"
 test-command = [
     "python -m venv venv_build",
     "venv_build\\Scripts\\pip install {wheel}[dev]",

@@ -31,13 +31,8 @@ class CMakeBuild(BuildExt):
     def build_extension(self, ext: Extension) -> None:
         import pybind11
         import amulet.pybind11_extensions
-        import amulet.utils
 
-        ext_dir = (
-            (Path.cwd() / self.get_ext_fullpath("")).parent.resolve()
-            / "amulet"
-            / "leveldb"
-        )
+        ext_dir = (Path.cwd() / self.get_ext_fullpath("")).parent.resolve() / "leveldb"
         leveldb_src_dir = (
             Path.cwd() / "src" / "amulet" / "leveldb" if self.editable_mode else ext_dir
         )
@@ -68,11 +63,10 @@ class CMakeBuild(BuildExt):
                     f"-DPython3_EXECUTABLE={fix_path(sys.executable)}",
                     f"-Dpybind11_DIR={fix_path(pybind11.get_cmake_dir())}",
                     f"-Damulet_pybind11_extensions_DIR={fix_path(amulet.pybind11_extensions.__path__[0])}",
-                    f"-Damulet_utils_DIR={fix_path(amulet.utils.__path__[0])}",
                     f"-Damulet_leveldb_DIR={fix_path(leveldb_src_dir)}",
                     f"-DAMULET_LEVELDB_EXT_DIR={fix_path(ext_dir)}",
                     f"-DCMAKE_INSTALL_PREFIX=install",
-                    f"-DTHREAD_SAFETY_ANALYSIS={os.environ.get("THREAD_SAFETY_ANALYSIS", "OFF")}",
+                    f"-DTHREAD_SAFETY_ANALYSIS={os.environ.get('THREAD_SAFETY_ANALYSIS', 'OFF')}",
                     "-B",
                     tempdir,
                 ]
@@ -94,7 +88,7 @@ cmdclass["build_ext"] = CMakeBuild  # type: ignore
 setup(
     version=versioneer.get_version(),
     cmdclass=cmdclass,
-    ext_modules=[Extension("amulet.leveldb._leveldb", [])]
+    ext_modules=[Extension("leveldb._leveldb", [])]
     * (not os.environ.get("AMULET_SKIP_COMPILE", None)),
     install_requires=requirements.get_runtime_dependencies(
         sys.argv[1] in ["egg_info", "sdist"]

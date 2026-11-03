@@ -240,7 +240,8 @@ def main() -> None:
 
     subprocess.run(
         [
-            sys.executable, "-m",
+            sys.executable,
+            "-m",
             "isort",
             *stub_paths,
         ]
@@ -248,7 +249,8 @@ def main() -> None:
 
     subprocess.run(
         [
-            sys.executable, "-m",
+            sys.executable,
+            "-m",
             "autoflake",
             "--in-place",
             "--remove-unused-variables",

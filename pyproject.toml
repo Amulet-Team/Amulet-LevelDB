@@ -83,7 +83,7 @@ manylinux-x86_64-image = "manylinux_2_34"
 
 [tool.cibuildwheel.linux]
 before-all = "yum install -y cmake"
-repair-wheel-command = "auditwheel repair --exclude -w {dest_dir} {wheel}"
+repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
 repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} --ignore-missing-dependencies -w {dest_dir} -v {wheel}"

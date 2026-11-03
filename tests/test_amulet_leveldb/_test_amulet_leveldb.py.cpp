@@ -9,7 +9,7 @@ void init_test_amulet_leveldb(py::module);
 
 static void _init_test_amulet_leveldb(py::module m){
     pyext::init_compiler_config(m);
-    pyext::check_compatibility(py::module::import("amulet.leveldb"), m);
+    pyext::check_compatibility(py::module::import("leveldb"), m);
     init_test_amulet_leveldb(m);
 }
 

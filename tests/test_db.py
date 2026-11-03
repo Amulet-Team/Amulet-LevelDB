@@ -9,7 +9,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from collections.abc import Iterable, Sequence
 
-from amulet.leveldb import LevelDB, LevelDBException
+from leveldb import LevelDB, LevelDBException
 
 num_keys = [struct.pack("<Q", i) for i in range(10_000)]
 num_db = dict(zip(num_keys, num_keys))

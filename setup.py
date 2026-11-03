@@ -34,7 +34,6 @@ class CMakeBuild(BuildExt):
 
         ext_dir = (
             (Path.cwd() / self.get_ext_fullpath("")).parent.resolve()
-            / "amulet"
             / "leveldb"
         )
         leveldb_src_dir = (
@@ -92,7 +91,7 @@ cmdclass["build_ext"] = CMakeBuild  # type: ignore
 setup(
     version=versioneer.get_version(),
     cmdclass=cmdclass,
-    ext_modules=[Extension("amulet.leveldb._leveldb", [])]
+    ext_modules=[Extension("leveldb._leveldb", [])]
     * (not os.environ.get("AMULET_SKIP_COMPILE", None)),
     install_requires=requirements.get_runtime_dependencies(
         sys.argv[1] in ["egg_info", "sdist"]

@@ -148,7 +148,7 @@ def patch_stubgen() -> None:
 
 def main() -> None:
     root_path = os.path.dirname(os.path.dirname(__file__))
-    src_path = os.path.join(root_path, "src")
+    src_path = os.path.join(root_path, "src", "amulet")
     amulet_leveldb_path = get_package_dir("leveldb")
     tests_path = os.path.join(root_path, "tests")
     test_amulet_leveldb_path = os.path.join(tests_path, "test_amulet_leveldb")
@@ -240,6 +240,7 @@ def main() -> None:
 
     subprocess.run(
         [
+            sys.executable, "-m",
             "isort",
             *stub_paths,
         ]
@@ -247,6 +248,7 @@ def main() -> None:
 
     subprocess.run(
         [
+            sys.executable, "-m",
             "autoflake",
             "--in-place",
             "--remove-unused-variables",

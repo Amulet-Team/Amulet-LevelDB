@@ -4,9 +4,6 @@
 #include <stdexcept>
 #include <utility>
 
-#include <amulet/utils/threading/mutex.hpp>
-#include <amulet/utils/threading/thread_safety.hpp>
-
 #include <leveldb/db.h>
 #include <leveldb/iterator.h>
 #include <leveldb/options.h>
@@ -17,11 +14,11 @@ namespace Amulet {
 
 class LevelDBImplShared {
 public:
-    astd::mutex m;
+    std::mutex m;
 
     // The iterators created by the leveldb object.
     // This is needed to know which iterators to destroy when the database is closed.
-    std::set<LevelDBIterator*> iterators ASTD_GUARDED_BY(m);
+    std::set<LevelDBIterator*> iterators;
 };
 
 LevelDBIterator::LevelDBIterator(std::shared_ptr<LevelDBImplShared> shared, leveldb::Iterator* it)
@@ -35,7 +32,7 @@ LevelDBIterator::~LevelDBIterator()
     destroy();
 }
 
-void LevelDBIterator::destroy_locked(LevelDBImplShared& shared) ASTD_REQUIRES_UNIQUE(shared.m)
+void LevelDBIterator::destroy_locked(LevelDBImplShared& shared)
 {
     if (_it) {
         shared.iterators.erase(this);
@@ -46,7 +43,7 @@ void LevelDBIterator::destroy_locked(LevelDBImplShared& shared) ASTD_REQUIRES_UN
 
 void LevelDBIterator::destroy()
 {
-    astd::lock_guard lock(_shared->m);
+    std::lock_guard lock(_shared->m);
     destroy_locked(*_shared);
 }
 
@@ -141,7 +138,7 @@ LevelDBImpl::~LevelDBImpl()
 
 void LevelDBImpl::close()
 {
-    astd::lock_guard iterators_lock(_shared->m);
+    std::lock_guard iterators_lock(_shared->m);
 
     // Extract the db to stop new iterators from being created.
     auto db = std::move(_db);
@@ -186,7 +183,7 @@ std::unique_ptr<LevelDBIterator> LevelDBImpl::create_iterator()
     std::unique_ptr<LevelDBIterator> iterator;
 
     // Acquire the lock
-    astd::lock_guard lock(_shared->m);
+    std::lock_guard lock(_shared->m);
     if (!_db) {
         throw std::runtime_error("leveldb database has been closed.");
     }

@@ -1,11 +1,69 @@
 from __future__ import annotations
 
-import collections as collections
+import collections.abc
 import typing
 
 from . import _leveldb, _version
 
-__all__: list = ["LevelDB", "LevelDBEncrypted", "LevelDBException", "LevelDBIterator"]
+__all__: list[str] = [
+    "CompressionType",
+    "LevelDB",
+    "LevelDBEncrypted",
+    "LevelDBException",
+    "LevelDBIterator",
+    "compiler_config",
+]
+
+class LevelDBException(Exception):
+    pass
+
+class LevelDBEncrypted(Exception):
+    pass
+
+class LevelDBIterator:
+    def key(self) -> bytes:
+        """
+        Get the key of the current entry in the database.
+        :raises: runtime_error if iterator is not valid.
+        """
+
+    def next(self) -> None:
+        """
+        Seek to the next entry in the database.
+        """
+
+    def prev(self) -> None:
+        """
+        Seek to the previous entry in the database.
+        """
+
+    def seek(self, target: bytes) -> None:
+        """
+        Seek to the given entry in the database.
+        If the entry does not exist it will seek to the location after.
+        """
+
+    def seek_to_first(self) -> None:
+        """
+        Seek to the first entry in the database.
+        """
+
+    def seek_to_last(self) -> None:
+        """
+        Seek to the last entry in the database.
+        """
+
+    def valid(self) -> bool:
+        """
+        Is the iterator at a valid entry.
+        If False, calls to other methods may error.
+        """
+
+    def value(self) -> bytes:
+        """
+        Get the value of the current entry in the database.
+        :raises: runtime_error if iterator is not valid.
+        """
 
 class CompressionType:
     """
@@ -20,25 +78,15 @@ class CompressionType:
       ZlibRawCompression : Zlib raw compression.
     """
 
-    NoCompression: typing.ClassVar[
-        CompressionType
-    ]  # value = amulet.leveldb.CompressionType.NoCompression
-    SnappyCompression: typing.ClassVar[
-        CompressionType
-    ]  # value = amulet.leveldb.CompressionType.SnappyCompression
-    ZlibRawCompression: typing.ClassVar[
-        CompressionType
-    ]  # value = amulet.leveldb.CompressionType.ZlibRawCompression
-    ZstdCompression: typing.ClassVar[
-        CompressionType
-    ]  # value = amulet.leveldb.CompressionType.ZstdCompression
-    __members__: typing.ClassVar[
-        dict[str, CompressionType]
-    ]  # value = {'NoCompression': amulet.leveldb.CompressionType.NoCompression, 'SnappyCompression': amulet.leveldb.CompressionType.SnappyCompression, 'ZstdCompression': amulet.leveldb.CompressionType.ZstdCompression, 'ZlibRawCompression': amulet.leveldb.CompressionType.ZlibRawCompression}
+    NoCompression: typing.ClassVar[CompressionType]
+    SnappyCompression: typing.ClassVar[CompressionType]
+    ZlibRawCompression: typing.ClassVar[CompressionType]
+    ZstdCompression: typing.ClassVar[CompressionType]
+    __members__: typing.ClassVar[dict[str, CompressionType]]
     def __eq__(self, other: typing.Any) -> bool: ...
     def __hash__(self) -> int: ...
     def __index__(self) -> int: ...
-    def __init__(self, value: typing.SupportsInt) -> None: ...
+    def __init__(self, value: typing.SupportsInt | typing.SupportsIndex) -> None: ...
     def __int__(self) -> int: ...
     def __ne__(self, other: typing.Any) -> bool: ...
     def __repr__(self) -> str: ...
@@ -143,59 +191,6 @@ class LevelDB:
         """
         An iterable of all values in the database.
         """
-
-class LevelDBEncrypted(Exception):
-    pass
-
-class LevelDBException(Exception):
-    pass
-
-class LevelDBIterator:
-    def key(self) -> bytes:
-        """
-        Get the key of the current entry in the database.
-        :raises: runtime_error if iterator is not valid.
-        """
-
-    def next(self) -> None:
-        """
-        Seek to the next entry in the database.
-        """
-
-    def prev(self) -> None:
-        """
-        Seek to the previous entry in the database.
-        """
-
-    def seek(self, target: bytes) -> None:
-        """
-        Seek to the given entry in the database.
-        If the entry does not exist it will seek to the location after.
-        """
-
-    def seek_to_first(self) -> None:
-        """
-        Seek to the first entry in the database.
-        """
-
-    def seek_to_last(self) -> None:
-        """
-        Seek to the last entry in the database.
-        """
-
-    def valid(self) -> bool:
-        """
-        Is the iterator at a valid entry.
-        If False, calls to other methods may error.
-        """
-
-    def value(self) -> bytes:
-        """
-        Get the value of the current entry in the database.
-        :raises: runtime_error if iterator is not valid.
-        """
-
-def _init() -> None: ...
 
 __version__: str
 compiler_config: dict

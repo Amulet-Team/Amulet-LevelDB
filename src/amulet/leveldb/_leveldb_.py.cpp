@@ -518,7 +518,9 @@ void init_amulet_leveldb(py::module m)
         py::arg("key"),
         py::call_guard<py::gil_scoped_release>());
 
-    auto get = [](Amulet::LevelDB& self, leveldb::Slice key) {
+    auto get = [](Amulet::LevelDB& self, py::bytes key) {
+        const char* key_buffer = PyBytes_AsString(key.ptr());
+        Py_ssize_t key_size = PyBytes_Size(key.ptr());
         std::string value;
         leveldb::Status status;
         {
@@ -526,12 +528,13 @@ void init_amulet_leveldb(py::module m)
             if (!self) {
                 throw std::runtime_error("The LevelDB database has been closed.");
             }
-            status = self->Get(self.get_read_options(), key, &value);
+            status = self->Get(self.get_read_options(), leveldb::Slice(key_buffer, key_size), &value);
         }
         if (status.ok()) {
             return py::bytes(value);
         } else if (status.IsNotFound()) {
-            throw py::key_error(key.ToString());
+            PyErr_SetObject(PyExc_KeyError, key.ptr());
+            throw py::error_already_set();
         } else {
             throw LevelDBException(status.ToString());
         }

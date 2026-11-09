@@ -40,6 +40,9 @@ class LevelDBTestCase(unittest.TestCase):
             with self.assertRaises(KeyError):
                 db.get(b"random_key")
 
+            with self.assertRaises(KeyError):
+                db.get(b"\xff")
+
             key1 = b"key"
             value1 = b"value"
             db.put(key1, value1)

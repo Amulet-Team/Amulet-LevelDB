@@ -41,7 +41,7 @@ class LevelDBTestCase(unittest.TestCase):
                 db.get(b"random_key")
 
             with self.assertRaises(KeyError):
-                db.get(b"\xFF")
+                db.get(b"\xff")
 
             key1 = b"key"
             value1 = b"value"

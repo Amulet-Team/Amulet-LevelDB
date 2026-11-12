@@ -578,6 +578,7 @@ void init_amulet_leveldb(py::module m)
     LevelDB.def(
         "create_iterator",
         &Amulet::LevelDB::create_iterator,
+        py::returns_non_null(),
         py::doc("Create a new leveldb Iterator."),
         py::call_guard<py::gil_scoped_release>());
 
